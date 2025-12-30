@@ -1,0 +1,33 @@
+{% load humanize %}
+            {% for guest in guests %}
+            <div class="p-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors animate-fade-in">
+                <div class="flex justify-between items-start">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h3 class="font-bold text-gray-900 uppercase">{{ guest.last_name }}, {{ guest.first_name }}</h3>
+                            {% if guest.status == 'PENDING' %}
+                                <span class="bg-orange-100 text-orange-800 text-xs font-medium px-2 py-0.5 rounded">Pending</span>
+                            {% elif guest.status == 'PRINTED' %}
+                                <span class="bg-green-100 text-green-800 text-xs font-medium px-2 py-0.5 rounded">Printed</span>
+                            {% endif %}
+                        </div>
+                        <p class="text-sm text-gray-500 mt-1">Room: <span class="font-medium text-gray-700">{{ guest.room_number|default:"--" }}</span> • {{ guest.nights }} Night(s)</p>
+                        <p class="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                            <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            {{ guest.created_at|naturaltime }}
+                        </p>
+                    </div>
+                    
+                    <a href="{% url 'update_guest' guest.id %}" class="text-white bg-orange-600 hover:bg-orange-700 focus:ring-4 focus:ring-orange-300 font-medium rounded-lg text-xs px-4 py-2 focus:outline-none flex items-center gap-1 shadow-sm whitespace-nowrap">
+                        <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <path stroke="currentColor" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        CHECK DETAILS
+                    </a>
+                </div>
+            </div>
+            {% empty %}
+            <div class="p-8 text-center text-gray-500">
+                No registrations found today.
+            </div>
+            {% endfor %}

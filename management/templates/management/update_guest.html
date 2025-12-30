@@ -1,0 +1,237 @@
+{% extends 'management/base.html' %}
+
+{% block title %}Guest Details{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100 pb-20">
+    <nav class="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-20 flex justify-between items-center shadow-sm">
+        <span class="font-bold text-lg tracking-tight text-gray-900"><span class="text-orange-600">KEGAMA</span> Admin</span>
+        <div class="text-right">
+            <div id="live-date" class="text-xs font-semibold text-orange-600 uppercase tracking-wider">-- --- ----</div>
+            <div id="live-clock" class="text-lg font-bold text-gray-800 leading-tight">--:--:--</div>
+        </div>
+    </nav>
+
+    <script>
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('live-date').innerText = now.toLocaleDateString([], { month: 'short', day: '2-digit', year: 'numeric' });
+            document.getElementById('live-clock').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+    </script>
+
+    <div class="p-4 max-w-6xl mx-auto">
+        
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">Guest Details</h2>
+            <span class="bg-gray-200 text-gray-700 text-xs font-mono px-2 py-1 rounded">ID: {{ guest.booking_id }}</span>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                <!-- COLUMN 1: GUEST PROFILE -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-xs font-bold text-orange-600 uppercase tracking-widest flex items-center gap-2 mb-6 border-b pb-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        Guest Profile
+                    </h3>
+
+                    <div class="space-y-6">
+                        <!-- Source -->
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Booking Source</label>
+                            <select name="source" class="w-full border-gray-200 rounded-lg text-sm focus:ring-orange-500 bg-gray-50 p-2">
+                                <option value="OYO" {% if guest.source == 'OYO' %}selected{% endif %}>OYO</option>
+                                <option value="AIRBNB" {% if guest.source == 'AIRBNB' %}selected{% endif %}>Airbnb</option>
+                                <option value="WALKIN" {% if guest.source == 'WALKIN' %}selected{% endif %}>Page/Walk-in</option>
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">First Name</label>
+                                <input type="text" name="first_name" value="{{ guest.first_name }}" class="w-full border-gray-200 rounded-lg text-sm focus:ring-orange-500 uppercase font-semibold">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Last Name</label>
+                                <input type="text" name="last_name" value="{{ guest.last_name }}" class="w-full border-gray-200 rounded-lg text-sm focus:ring-orange-500 uppercase font-semibold">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Address</label>
+                            <input type="text" name="address" value="{{ guest.address }}" class="w-full border-gray-200 rounded-lg text-sm focus:ring-orange-500 uppercase">
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Gender</label>
+                                <select name="gender" class="w-full border-gray-200 rounded-lg text-sm focus:ring-orange-500 p-2">
+                                    <option value="Male" {% if guest.gender == 'Male' %}selected{% endif %}>Male</option>
+                                    <option value="Female" {% if guest.gender == 'Female' %}selected{% endif %}>Female</option>
+                                    <option value="Other" {% if guest.gender == 'Other' %}selected{% endif %}>Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Birth Date</label>
+                                <input type="date" name="birth_date" value="{{ guest.birth_date|date:'Y-m-d' }}" class="w-full border-gray-200 rounded-lg text-sm focus:ring-orange-500">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Phone</label>
+                                <input type="tel" name="phone" value="{{ guest.phone }}" class="w-full border-gray-200 rounded-lg text-sm focus:ring-orange-500">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Email</label>
+                                <input type="email" name="email" value="{{ guest.email }}" class="w-full border-gray-200 rounded-lg text-sm focus:ring-orange-500">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COLUMN 2: RESERVATION DETAILS -->
+                <div class="flex flex-col gap-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex-grow">
+                        <h3 class="text-xs font-bold text-orange-600 uppercase tracking-widest flex items-center gap-2 mb-8 border-b pb-3">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                            Reservation Details
+                        </h3>
+
+                        <div class="space-y-6">
+                            <div class="grid grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Pax</label>
+                                    <input type="number" name="pax" value="{{ guest.pax }}" min="1" class="w-full border-gray-200 rounded-lg text-sm focus:ring-orange-500 font-bold bg-orange-50/50">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Nights</label>
+                                    <input type="number" name="nights" value="{{ guest.nights }}" min="1" class="w-full border-gray-200 rounded-lg text-sm focus:ring-orange-500 font-bold bg-orange-50/50">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Room #</label>
+                                    <select name="room_number" id="roomSelect" class="p-2 w-full border-gray-200 rounded-lg text-sm focus:ring-orange-500 font-bold bg-orange-50 text-orange-900" onchange="updateRoomRate()">
+                                        <option value="">Select Room</option>
+                                        {% for floor, rooms in room_data.items %}
+                                            <optgroup label="{{ floor }}">
+                                                {% for room in rooms %}
+                                                    <option value="{{ room.id }}" data-price="{{ room.price }}" {% if guest.room_number == room.id %}selected{% endif %}>
+                                                        {{ room.id }} (₱{{ room.price }})
+                                                    </option>
+                                                {% endfor %}
+                                            </optgroup>
+                                        {% endfor %}
+                                    </select>
+                                    <input type="number" step="0.01" name="room_rate" id="roomRate" value="{{ guest.room_rate }}" class="mt-1 w-full border-gray-200 rounded-lg text-[10px] bg-gray-100 text-gray-500 p-1" placeholder="Rate" readonly>
+                                </div>
+                            </div>
+
+                            <!-- DISCOUNT & REQUESTS -->
+                             <div>
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Discount (%)</label>
+                                <div class="relative">
+                                    <input type="number" name="discount_percent" value="{{ guest.discount_percent|floatformat:0 }}" min="0" max="100" step="1" class="w-full border-gray-200 rounded-lg text-sm pr-8 focus:ring-orange-500 font-bold">
+                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="border-t pt-4">
+                                <label class="block text-[10px] font-bold text-orange-600 uppercase mb-2">Additional Requests (+/-)</label>
+                                <div id="requests-container" class="space-y-2">
+                                    {% for req in current_requests %}
+                                    <div class="flex gap-2 items-center request-row">
+                                        <input type="text" name="request_item[]" value="{{ req.item }}" placeholder="Item Name" class="flex-grow border-gray-200 rounded-lg text-sm">
+                                        <input type="number" step="0.01" name="request_price[]" value="{{ req.price }}" placeholder="Price" class="w-24 border-gray-200 rounded-lg text-sm">
+                                        <button type="button" onclick="this.closest('.request-row').remove()" class="text-red-500 hover:text-red-700 bg-red-50 p-1 rounded">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                        </button>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <button type="button" onclick="addRequestRow()" class="mt-2 text-xs font-bold text-white bg-green-500 hover:bg-green-600 px-3 py-1 rounded-lg flex items-center gap-1">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                                    ADD ITEM
+                                </button>
+                            </div>
+
+                            <script>
+                                function addRequestRow() {
+                                    const div = document.createElement('div');
+                                    div.className = 'flex gap-2 items-center request-row';
+                                    div.innerHTML = `
+                                        <input type="text" name="request_item[]" placeholder="Item Name" class="flex-grow border-gray-200 rounded-lg text-sm">
+                                        <input type="number" step="0.01" name="request_price[]" placeholder="Price" value="0" class="w-24 border-gray-200 rounded-lg text-sm">
+                                        <button type="button" onclick="this.closest('.request-row').remove()" class="text-red-500 hover:text-red-700 bg-red-50 p-1 rounded">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                        </button>
+                                    `;
+                                    document.getElementById('requests-container').appendChild(div);
+                                }
+
+                                function updateRoomRate() {
+                                    const select = document.getElementById('roomSelect');
+                                    const option = select.options[select.selectedIndex];
+                                    const price = option.getAttribute('data-price');
+                                    if (price) {
+                                        document.getElementById('roomRate').value = price;
+                                    }
+                                }
+                            </script>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Check-in</label>
+                                    <input required type="date" name="check_in_date" value="{{ guest.check_in_date|date:'Y-m-d' }}" class="w-full border-gray-200 rounded-lg text-sm mb-1">
+                                    <input required type="time" name="check_in_time" value="{{ guest.check_in_time|time:'H:i' }}" class="w-full border-gray-200 rounded-lg text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Check-out</label>
+                                    <input required type="date" name="check_out_date" value="{{ guest.check_out_date|date:'Y-m-d' }}" class="w-full border-gray-200 rounded-lg text-sm mb-1">
+                                    <input required type="time" name="check_out_time" value="{{ guest.check_out_time|time:'H:i' }}" class="w-full border-gray-200 rounded-lg text-sm">
+                                </div>
+                            </div>
+
+                            <div class="pt-4">
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Security Deposit (PHP)</label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm">₱</span>
+                                    </div>
+                                    <input required type="number" step="0.01" name="security_deposit" value="{{ guest.security_deposit }}" class="w-full border-gray-200 rounded-lg text-sm pl-7 focus:ring-orange-500 font-bold text-lg">
+                                </div>                            </div>
+
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Notes (Optional)</label>
+                                <textarea name="notes" rows="2" class="p-2 w-full border-gray-200 rounded-lg text-sm focus:ring-orange-500 bg-gray-50 placeholder-gray-300" placeholder="e.g. Late check-out requested, Extra bed...">{{ guest.notes }}</textarea>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="space-y-3">
+                        <button type="submit" name="action" value="save" class="w-full bg-white text-gray-700 border border-gray-300 hover:bg-gray-50 font-bold rounded-xl text-sm px-5 py-3 transform active:scale-[0.98] transition-all">
+                            UPDATE DETAILS ONLY
+                        </button>
+                        <button type="submit" name="action" value="save_and_print" class="w-full bg-orange-600 text-white hover:bg-orange-700 font-bold rounded-xl text-sm px-5 py-4 shadow-lg shadow-orange-100 transform active:scale-[0.98] transition-all uppercase tracking-wide flex items-center justify-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                            CONFIRM & PRINT PDF
+                        </button>
+                        <a href="{% url 'dashboard' %}" class="block w-full text-center text-gray-400 hover:text-gray-600 text-xs font-bold py-2 tracking-widest">
+                            CANCEL
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

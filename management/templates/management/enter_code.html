@@ -1,0 +1,29 @@
+{% extends 'management/base.html' %}
+
+{% block title %}Authorized Access Only{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100 flex items-center justify-center p-4">
+    <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200 text-center max-w-sm w-full">
+        <div class="text-blue-500 mb-4 flex justify-center">
+            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+        </div>
+        <h1 class="text-xl font-bold text-gray-800 mb-2">Restricted Access</h1>
+        <p class="text-gray-500 text-sm mb-6">This form is protected. Please enter the access code to continue.</p>
+        
+        <form method="post">
+            {% csrf_token %}
+            {% if error %}
+            <div class="bg-red-50 text-red-600 text-xs p-2 rounded mb-3 font-bold">
+                {{ error }}
+            </div>
+            {% endif %}
+            <input type="password" name="access_code" placeholder="Enter Access Code" required autofocus class="w-full text-center tracking-widest text-lg font-bold border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 mb-4 p-3 uppercase">
+            
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md transition-all">
+                UNLOCK FORM
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}

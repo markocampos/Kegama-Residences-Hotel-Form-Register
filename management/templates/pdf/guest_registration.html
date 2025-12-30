@@ -1,0 +1,358 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Kegama Registration Form</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 0.25in; /* Reduced margins further */
+        }
+        
+        body {
+            font-family: "Helvetica", "Arial", sans-serif; 
+            font-size: 11px; /* Reduced from 12px */
+            color: #1a1a1a;
+            line-height: 1.3; /* Tighter line height */
+        }
+
+        /* UTILITIES */
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .font-bold { font-weight: bold; }
+        .w-full { width: 100%; }
+        
+        /* HEADER SECTION */
+        .header-top {
+            width: 100%;
+            margin-bottom: 10px; /* Reduced margin */
+            font-size: 10px;
+        }
+
+        /* THE IMAGE IN THE MIDDLE */
+        .logo-container {
+            text-align: center;
+            margin-bottom: 5px; /* Reduced margin */
+        }
+        
+        .logo-img {
+            width: 200px; /* Reduced logo size */
+            display: block;
+            margin: 0 auto;
+        }
+
+        .sub-header {
+            font-family: "Times New Roman", serif;
+            font-weight: bold;
+            font-size: 14px; /* Reduced font size */
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-top: 5px;
+            color: #ea580c; /* Orange 600 */
+        }
+
+        /* CHECKBOXES */
+        .checkbox-square {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 1px solid #333;
+            margin-right: 4px;
+            vertical-align: middle;
+            text-align: center;
+            line-height: 14px;
+            position: relative;
+        }
+        .checked::after {
+            content: "X";
+            font-size: 12px;
+            font-weight: bold;
+            color: #ea580c;
+            position: absolute;
+            top: 0;
+            left: 3px;
+            line-height: 14px;
+        }
+
+        /* INPUT FIELDS */
+        table.form-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 8px; /* More breathing room */
+        }
+        
+        td.label {
+            font-weight: bold;
+            color: #374151; /* Dark gray */
+            padding-right: 8px;
+            white-space: nowrap;
+            width: 1%;
+            vertical-align: bottom;
+            padding-bottom: 3px;
+        }
+
+        td.input-line {
+            border-bottom: 1px solid #4b5563;
+            font-family: "Courier New", monospace;
+            font-size: 15px; /* Larger data font */
+            vertical-align: bottom;
+            padding-left: 10px;
+            width: 99%;
+            color: #000;
+        }
+
+        /* MAIN BOX */
+        .main-border {
+            border: 2px solid #ea580c; /* Orange border */
+            padding: 15px; /* Reduced padding */
+            height: auto;
+            min-height: 580px; /* Reduced min-height */
+            position: relative;
+        }
+
+        /* DATES SECTION */
+        .dates-section {
+            border-top: 1px solid #ea580c;
+            border-bottom: 1px solid #ea580c;
+            margin-top: 15px; /* Reduced margin */
+            padding: 5px 0; /* Reduced padding */
+            background-color: #fff7ed; /* Orange 50 tint */
+        }
+
+        /* POLICY BOX */
+        .policy-container {
+            width: 100%;
+            margin-top: 15px; /* Reduced margin */
+            vertical-align: bottom;
+        }
+        
+        .policy-box {
+            background-color: #fffbeb; /* Softer yellow */
+            border: 1px solid #d97706; /* Amber border */
+            padding: 8px; /* Reduced padding */
+            font-size: 9px; /* Reduced font size */
+            width: 58%;
+            vertical-align: top;
+            line-height: 1.2;
+        }
+
+        /* SIGNATURE AREA */
+        .signature-box {
+            width: 40%;
+            padding-left: 20px;
+            vertical-align: bottom;
+            text-align: center;
+        }
+
+        .signature-line {
+            border-top: 1px solid #000;
+            width: 100%;
+            margin-top: 30px; /* Reduced margin */
+            padding-top: 2px;
+        }
+    </style>
+</head>
+<body>
+
+    <table class="header-top">
+        <tr>
+            <td style="width: 60%;">
+                <span class="checkbox-square {% if guest.source == 'OYO' %}checked{% endif %}"></span> OYO &nbsp;
+                <span class="checkbox-square {% if guest.source == 'AIRBNB' %}checked{% endif %}"></span> AIRBNB &nbsp;
+                <span class="checkbox-square {% if guest.source == 'WALKIN' %}checked{% endif %}"></span> PAGE/WALK-IN
+            </td>
+            <td class="text-right">
+                <b>SECURITY DEPOSIT:</b> P <u style="font-family: 'Courier New'; font-size: 12px;">{{ guest.security_deposit|intcomma|default:"Error" }}</u>
+            </td>
+        </tr>
+    </table>
+
+    <div class="logo-container">
+        <!-- Replaced file:// protocol with static path handled by weasyprint's helpers usually, but standard django static tag is better if configured right. 
+             For simplicity in this snippet, we will assume weasyprint base_url handling or relative paths. -->
+        <img src="file://{{ base_dir }}/static/images/logo.png" class="logo-img" alt="KEGAMA Residences">
+        
+        <div class="sub-header">REGISTRATION FORM</div>
+    </div>
+
+    <table class="w-full" style="margin-bottom: 10px;">
+        <tr>
+            <td style="width: 50%;">
+                <b>Date: Today:</b> <span style="font-family: 'Courier New'; text-decoration: underline;">{% now "M d, Y" %}</span>
+            </td>
+            <td class="text-right">
+                <b>BOOKING ID #</b> <span style="border-bottom: 1px solid #000; padding: 0 5px; font-family: 'Courier New';">{{ guest.booking_id }}</span>
+            </td>
+        </tr>
+    </table>
+
+    <div class="main-border">
+        
+        <table class="form-table">
+            <tr>
+                <td class="label">Last Name</td>
+                <td class="input-line">{{ guest.last_name|upper }}</td>
+            </tr>
+        </table>
+
+        <table class="form-table">
+            <tr>
+                <td class="label">First Name</td>
+                <td class="input-line">{{ guest.first_name|upper }}</td>
+            </tr>
+        </table>
+
+        <table class="form-table">
+            <tr>
+                <td class="label">Address</td>
+                <td class="input-line">{{ guest.address|upper }}</td>
+            </tr>
+        </table>
+
+        <table class="form-table">
+            <tr>
+                <td class="label">Phone</td>
+                <td class="input-line">{{ guest.phone }}</td>
+            </tr>
+        </table>
+
+        <table class="form-table">
+            <tr>
+                <td class="label">Email</td>
+                <td class="input-line">{{ guest.email }}</td>
+            </tr>
+        </table>
+
+        <table class="form-table" style="margin-bottom: 15px;">
+            <tr>
+                <td class="label">Birth date</td>
+                <td class="input-line">{{ guest.birth_date }}</td>
+            </tr>
+        </table>
+
+        <table class="w-full" style="margin-bottom: 15px; border-collapse: collapse;">
+            <tr>
+                <td class="label" style="width: 1%;">Gender</td>
+                <td class="input-line" style="width: 15%;">{{ guest.gender }}</td>
+                <td style="width: 2%;"></td>
+                
+                <td class="label" style="width: 1%;">No. of PAX</td>
+                <td class="input-line" style="width: 10%; text-align: center;">{{ guest.pax }}</td>
+                <td style="width: 2%;"></td>
+                
+                <td class="label" style="width: 1%;">No. of Nights</td>
+                <td class="input-line" style="width: 10%; text-align: center;">{{ guest.nights }}</td>
+            </tr>
+        </table>
+
+        <table class="form-table" style="margin-bottom: 20px;">
+            <tr>
+                <td class="label">Room</td>
+                <td class="input-line">{{ guest.room_number }}</td>
+            </tr>
+        </table>
+
+        <div class="dates-section">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td class="label" style="width: 1%; padding-left: 10px;">Check-in&nbsp;DATE:</td>
+                    <td class="input-line" style="width: 35%;">{{ guest.check_in_date|default:"" }}</td>
+                    <td class="label" style="width: 1%; padding-left: 40px;">TIME:</td>
+                    <td class="input-line" style="width: 25%;">{{ guest.check_in_time|default:"" }}</td>
+                    <td></td> <!-- Absorbs remaining space -->
+                </tr>
+                <tr><td colspan="5" style="height: 12px;"></td></tr>
+                <tr>
+                    <td class="label" style="width: 1%; padding-left: 10px;">Check-out&nbsp;DATE:</td>
+                    <td class="input-line" style="width: 35%;">{{ guest.check_out_date|default:"" }}</td>
+                    <td class="label" style="width: 1%; padding-left: 40px;">TIME:</td>
+                    <td class="input-line" style="width: 25%;">{{ guest.check_out_time|default:"" }}</td>
+                    <td></td> <!-- Absorbs remaining space -->
+                </tr>
+            </table>
+        </div>
+
+        {% if guest.notes %}
+        <div style="margin-top: 15px; border: 1px dashed #ea580c; padding: 8px; background-color: #fffaf0;">
+            <div style="font-weight: bold; font-size: 10px; color: #ea580c; margin-bottom: 4px;">NOTES / REMARKS:</div>
+            <div style="font-family: 'Courier New', monospace; font-size: 11px;">{{ guest.notes|linebreaksbr }}</div>
+        </div>
+        {% endif %}
+
+        <table class="policy-container">
+            <tr>
+                <td class="policy-box">
+                    <div style="font-weight: bold; margin-bottom: 4px;">Kegama Reservation Policy</div>
+                    
+                    <div style="margin-bottom: 4px; color: #444;">
+                        Check-in Time: 02:00 PM - 09:00 PM<br>
+                        Check-out Time: 12:00 NN
+                    </div>
+
+                    <ul>
+                        <li>Early check-in/late check-out subject to availability.</li>
+                        <li>Premium Business privilege guests have flexible check-in.</li>
+                        <li>Full room rate chargeable for check-in before 07:00 AM.</li>
+                        <li>Changes in reservation may require rate changes.</li>
+                        <li>Rooms not occupied by 2:00 PM considered no-show.</li>
+                        <li>Valid ID required for all guests.</li>
+                        <li>Guests under 18 must be accompanied by a parent/guardian.</li>
+                    </ul>
+                    <div class="text-center" style="margin-top: 8px; font-family: 'Brush Script MT', cursive; font-size: 14px;">
+                        Affordable yet Luxurious
+                    </div>
+                </td>
+
+                <td class="signature-box">
+                    <div class="signature-line"></div>
+                    <div style="font-weight: bold; font-size: 10px;">SIGNATURE</div>
+
+                    <div class="signature-line" style="margin-top: 35px; border-top: none; border-bottom: 1px solid #000;">
+                        <span style="font-family: 'Courier New'; font-size: 14px; text-transform: uppercase;">
+                            {{ guest.first_name }} {{ guest.last_name }}
+                        </span>
+                    </div>
+                    <div style="font-weight: bold; font-size: 10px; margin-top: 2px;">PRINTED NAME</div>
+                </td>
+            </tr>
+        </table>
+
+        <!-- SLIP SECTION -->
+        <div style="margin-top: 25px; border-top: 2px dashed #ea580c; padding-top: 15px;">
+            <div style="font-weight: bold; text-align: center; color: #ea580c; margin-bottom: 10px; font-size: 12px;">PAYMENT DETAILS</div>
+            
+            <table style="width: 100%; border-collapse: collapse; font-family: 'Courier New', monospace; font-size: 11px;">
+                <tr style="background-color: #fff7ed;">
+                    <td style="padding: 4px; font-weight: bold;">Room {{ guest.room_number }} ({{ guest.nights }} Nights @ {{ guest.room_rate|intcomma }})</td>
+                    <td class="text-right" style="padding: 4px;">{{ room_total|floatformat:2|intcomma }}</td>
+                </tr>
+                
+                {% if discount_amount > 0 %}
+                <tr>
+                    <td style="padding: 4px;">Less: Discount ({{ guest.discount_percent|floatformat:0 }}%)</td>
+                    <td class="text-right" style="padding: 4px; color: #dc2626;">-{{ discount_amount|floatformat:2|intcomma }}</td>
+                </tr>
+                {% endif %}
+
+                {% for req in requests_list %}
+                <tr>
+                    <td style="padding: 4px;">Add: {{ req.item }}</td>
+                    <td class="text-right" style="padding: 4px;">{{ req.price|floatformat:2|intcomma }}</td>
+                </tr>
+                {% endfor %}
+
+                <tr style="border-top: 2px solid #ea580c; font-weight: bold; font-size: 13px;">
+                    <td style="padding: 10px 4px;">TOTAL AMOUNT</td>
+                    <td class="text-right" style="padding: 10px 4px;">P {{ grand_total|floatformat:2|intcomma }}</td>
+                </tr>
+            </table>
+            
+            <div style="margin-top: 10px; font-size: 9px; text-align: center; color: #666;">
+                Guest: {{ guest.first_name }} {{ guest.last_name }} | Generated: {% now "M d, Y H:i" %}
+            </div>
+        </div>
+
+    </div>
+</body>
+</html>

@@ -1,0 +1,105 @@
+{% extends 'management/base.html' %}
+
+{% block title %}Management Dashboard{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100 pb-20">
+    
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-20 flex justify-between items-center shadow-sm">
+        <span class="font-bold text-lg tracking-tight text-gray-900"><span class="text-orange-600">KEGAMA</span> Admin</span>
+        <div class="text-right">
+            <div id="live-date" class="text-xs font-semibold text-orange-600 uppercase tracking-wider">-- --- ----</div>
+            <div id="live-clock" class="text-lg font-bold text-gray-800 leading-tight">--:--:--</div>
+            <div class="text-[10px] uppercase text-gray-400 font-bold tracking-tighter">Live Monitor</div>
+        </div>
+    </nav>
+
+    <script>
+        function updateClock() {
+            const now = new Date();
+            // Date format: Dec 30, 2025
+            document.getElementById('live-date').innerText = now.toLocaleDateString([], { month: 'short', day: '2-digit', year: 'numeric' });
+            // Time format: 12:00:00 PM
+            document.getElementById('live-clock').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+    </script>
+
+    <div class="p-4 max-w-4xl mx-auto">
+        <div class="flex justify-between items-center mb-4">
+            <h1 class="text-xl font-bold text-gray-800">Guest Registrations</h1>
+            <div class="flex gap-2">
+                <a href="{% url 'analytics_dashboard' %}" class="flex items-center gap-2 bg-white border border-gray-200 hover:border-orange-500 hover:text-orange-600 text-gray-600 px-3 py-1.5 rounded-lg text-sm font-bold transition-all shadow-sm">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    Analytics
+                </a>
+                <a href="{% url 'settings_page' %}" class="flex items-center gap-2 bg-white border border-gray-200 hover:border-gray-500 hover:text-gray-800 text-gray-600 px-3 py-1.5 rounded-lg text-sm font-bold transition-all shadow-sm" title="Security Settings">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                </a>
+            </div>
+        </div>
+
+        <div id="guest-list" 
+             hx-get="{% url 'dashboard' %}" 
+             hx-trigger="every 5s" 
+             hx-swap="innerHTML"
+             class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+            {% include 'management/partials/guest_list.html' %}
+        </div>
+
+        <!-- Developer Options Toggle -->
+        <div class="flex justify-center mt-12 mb-4">
+            <button onclick="document.getElementById('audit-log-section').classList.toggle('hidden');" 
+                    class="p-2 text-gray-400 bg-gray-200 rounded-full hover:bg-gray-800 hover:text-white transition-all duration-300 opacity-40 hover:opacity-100 shadow-sm" 
+                    title="Developer Options">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            </button>
+        </div>
+
+        <!-- Security Audit Log (Hidden by default) -->
+        <div id="audit-log-section" class="hidden bg-white border border-gray-100 rounded-2xl p-6 shadow-sm transition-all animate-fade-in">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="bg-gray-100 p-2 rounded-lg">
+                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                </div>
+                <h3 class="font-bold text-gray-900">Security Audit Log</h3>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left text-gray-500">
+                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                        <tr>
+                            <th scope="col" class="px-4 py-3">Time</th>
+                            <th scope="col" class="px-4 py-3">Action</th>
+                            <th scope="col" class="px-4 py-3">Details</th>
+                            <th scope="col" class="px-4 py-3">IP</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in audit_logs %}
+                        <tr class="bg-white border-b hover:bg-gray-50">
+                            <td class="px-4 py-3 whitespace-nowrap">{{ log.timestamp|date:"M d, H:i" }}</td>
+                            <td class="px-4 py-3 font-semibold 
+                                {% if log.action == 'LOGIN' %}text-green-600
+                                {% elif log.action == 'PRINT_PDF' %}text-purple-600
+                                {% elif log.action == 'UPDATE_GUEST' %}text-blue-600
+                                {% else %}text-gray-600{% endif %}">
+                                {{ log.get_action_display }}
+                            </td>
+                            <td class="px-4 py-3">{{ log.details }}</td>
+                            <td class="px-4 py-3 font-mono text-xs">{{ log.ip_address }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="px-4 py-3 text-center text-gray-400">No recent activity</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
