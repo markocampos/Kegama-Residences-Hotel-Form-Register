@@ -4,42 +4,13 @@ from django.conf import settings
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import HttpResponse
 from django.template.loader import render_to_string
-from .models import GuestRegistration, AuditLog
+from .models import GuestRegistration, AuditLog, Room
 from django.views.decorators.http import require_POST
 from django.urls import reverse
 from django_ratelimit.decorators import ratelimit
 from django.utils import timezone
 from datetime import timedelta
-
-# ROOM DATA CONFIGURATION
-ROOM_DATA = {
-    '1st Floor': [
-        {'id': '1A', 'price': 2350},
-        {'id': '1B', 'price': 2050},
-        {'id': '1C', 'price': 2450},
-        {'id': '1D', 'price': 1750},
-    ],
-    '2nd Floor': [
-        {'id': '2A', 'price': 1115},
-        {'id': '2B', 'price': 1115},
-        {'id': '2C', 'price': 1115},
-        {'id': '2D', 'price': 1115},
-        {'id': '2E', 'price': 1115},
-        {'id': '2F', 'price': 1115},
-        {'id': '2G', 'price': 2250},
-        {'id': '2H', 'price': 1450},
-    ],
-    '3rd Floor': [
-        {'id': '3A', 'price': 1115},
-        {'id': '3B', 'price': 1115},
-        {'id': '3C', 'price': 1115},
-        {'id': '3D', 'price': 1115},
-        {'id': '3E', 'price': 1115},
-        {'id': '3F', 'price': 1115},
-        {'id': '3G', 'price': 2350},
-        {'id': '3H', 'price': 1450},
-    ]
-}
+import json
 
 def log_action(request, action, details):
     ip = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -189,8 +160,8 @@ def dashboard(request):
         
     return render(request, 'management/dashboard.html', {'guests': guests, 'audit_logs': audit_logs})
 
-from django.db.models import Sum, Count, F
-from django.db.models.functions import TruncMonth, TruncDate
+from django.db.models import Sum, Count, F, Q
+from django.db.models.functions import TruncMonth, TruncDate, TruncWeek, TruncYear
 
 def update_guest(request, guest_id):
     if not request.session.get('is_manager'):
@@ -210,11 +181,13 @@ def update_guest(request, guest_id):
         
         # Room Data
         guest.room_number = request.POST.get('room_number')
-        guest.room_rate = float(request.POST.get('room_rate') or 0)
+        room_rate_raw = request.POST.get('room_rate', '0').replace(',', '')
+        guest.room_rate = float(room_rate_raw or 0)
         
         # Financials
-        guest.discount_percent = float(request.POST.get('discount_percent') or 0)
-        guest.security_deposit = request.POST.get('security_deposit') or 0
+        guest.mode_of_payment = request.POST.get('mode_of_payment')
+        security_deposit_raw = request.POST.get('security_deposit', '0').replace(',', '')
+        guest.security_deposit = float(security_deposit_raw or 0)
         
         # Requests processing
         req_items = request.POST.getlist('request_item[]')
@@ -234,8 +207,7 @@ def update_guest(request, guest_id):
         
         # Calculate Total Amount
         room_total = guest.room_rate * int(guest.nights or 1)
-        discount_amount = room_total * (guest.discount_percent / 100)
-        guest.total_amount = room_total - discount_amount + requests_total
+        guest.total_amount = room_total + requests_total
 
         guest.check_in_date = request.POST.get('check_in_date') or None
         guest.check_in_time = request.POST.get('check_in_time') or None
@@ -260,9 +232,36 @@ def update_guest(request, guest_id):
     except:
         current_requests = []
 
+    # POLICY: Auto-fill dates if missing
+    now = timezone.now()
+    if not guest.check_in_date:
+        guest.check_in_date = now.date()
+    if not guest.check_in_time:
+        guest.check_in_time = "14:00" # Policy 2PM
+    if not guest.check_out_date:
+        guest.check_out_date = (now + timedelta(days=1)).date()
+    if not guest.check_out_time:
+        guest.check_out_time = "12:00" # Policy 12NN
+
+    # Fetch Rooms from Database for Dropdown
+    # Filter out MAINTENANCE or OCCUPIED rooms unless it is the guest's current room
+    db_rooms = Room.objects.filter(
+        Q(status='AVAILABLE') | Q(number=guest.room_number)
+    ).order_by('floor', 'number')
+    
+    room_data = {}
+    for room in db_rooms:
+        if room.floor not in room_data:
+            room_data[room.floor] = []
+        room_data[room.floor].append({
+            'id': room.number,
+            'price': room.price,
+            'capacity': room.capacity
+        })
+
     return render(request, 'management/update_guest.html', {
         'guest': guest, 
-        'room_data': ROOM_DATA,
+        'room_data': room_data,
         'current_requests': current_requests
     })
 
@@ -274,34 +273,97 @@ def analytics_dashboard(request):
     total_revenue = GuestRegistration.objects.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
     total_guests = GuestRegistration.objects.count()
     
+    # Guests of the Day
+    today = timezone.now().date()
+    guests_today = GuestRegistration.objects.filter(created_at__date=today).count()
+    
     # Source Breakdown
     source_query = GuestRegistration.objects.values('source').annotate(count=Count('id'))
     source_data = list(source_query)
     
-    # Daily Revenue (Last 31 days)
-    last_month = timezone.now() - timedelta(days=31)
-    daily_query = GuestRegistration.objects.filter(
-        created_at__gte=last_month
-    ).annotate(
-        date=TruncDate('created_at')
-    ).values('date').annotate(
-        revenue=Sum('total_amount')
-    ).order_by('date')
+    # Chart Data Filtering
+    filter_type = request.GET.get('filter', 'daily')
+    chart_data = []
     
-    daily_data = list(daily_query)
+    if filter_type == 'weekly':
+        # Last 52 weeks
+        start_date = timezone.now() - timedelta(weeks=52)
+        chart_query = GuestRegistration.objects.filter(created_at__gte=start_date).annotate(
+            date=TruncWeek('created_at')
+        ).values('date').annotate(revenue=Sum('total_amount')).order_by('date')
+        
+    elif filter_type == 'monthly':
+        # Last 12 months
+        start_date = timezone.now() - timedelta(days=365)
+        chart_query = GuestRegistration.objects.filter(created_at__gte=start_date).annotate(
+            date=TruncMonth('created_at')
+        ).values('date').annotate(revenue=Sum('total_amount')).order_by('date')
+        
+    elif filter_type == 'yearly':
+        # Last 5 years
+        start_date = timezone.now() - timedelta(days=365*5)
+        chart_query = GuestRegistration.objects.filter(created_at__gte=start_date).annotate(
+            date=TruncYear('created_at')
+        ).values('date').annotate(revenue=Sum('total_amount')).order_by('date')
+        
+    else: # daily (default)
+        # Last 30 days only for readability, or use scroll
+        start_date = timezone.now() - timedelta(days=30)
+        chart_query = GuestRegistration.objects.filter(created_at__gte=start_date).annotate(
+            date=TruncDate('created_at')
+        ).values('date').annotate(revenue=Sum('total_amount')).order_by('date')
+    
+    chart_data = list(chart_query)
     
     # Calculate Max Revenue for Chart Scaling
     max_revenue = 0
-    if daily_data:
-        max_revenue = max((d['revenue'] or 0) for d in daily_data)
+    if chart_data:
+        max_revenue = max((d['revenue'] or 0) for d in chart_data)
 
     return render(request, 'management/analytics.html', {
         'total_revenue': total_revenue,
         'total_guests': total_guests,
+        'guests_today': guests_today,
         'source_data': source_data,
-        'daily_revenue': daily_data,
+        'daily_revenue': chart_data, # Passed as daily_revenue for compatibility with template
         'max_revenue': max_revenue,
+        'current_filter': filter_type,
     })
+
+def print_analytics(request):
+    if not request.session.get('is_manager'):
+        return redirect('admin_login')
+    
+    # Yearly Summary Stats
+    total_revenue = GuestRegistration.objects.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
+    total_guests = GuestRegistration.objects.count()
+    
+    # Monthly Breakdown (Last 12 Months)
+    last_year = timezone.now() - timedelta(days=365)
+    monthly_query = GuestRegistration.objects.filter(
+        created_at__gte=last_year
+    ).annotate(
+        month=TruncMonth('created_at')
+    ).values('month').annotate(
+        revenue=Sum('total_amount'),
+        guests=Count('id')
+    ).order_by('month')
+    
+    monthly_data = list(monthly_query)
+
+    html_string = render_to_string('pdf/analytics_report.html', {
+        'total_revenue': total_revenue,
+        'total_guests': total_guests,
+        'monthly_data': monthly_data,
+        'generated_at': timezone.now(),
+        'base_dir': settings.BASE_DIR,
+    })
+    
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="revenue_report_{timezone.now().date()}.pdf"'
+    weasyprint.HTML(string=html_string, base_url=str(settings.BASE_DIR)).write_pdf(response)
+    
+    return response
 
 def settings_page(request):
     if not request.session.get('is_manager'):
@@ -345,6 +407,92 @@ def settings_page(request):
         'settings': settings_obj
     })
 
+def room_rack(request):
+    if not request.session.get('is_manager'):
+        return redirect('admin_login')
+    
+    # Fetch all guests
+    # In a real scenario, you might filter out 'checked-out' guests if you had that status.
+    # For now, we map the latest registration for each room.
+    guests = GuestRegistration.objects.all().order_by('created_at')
+    
+    room_map = {}
+    for guest in guests:
+        if guest.room_number:
+            room_map[guest.room_number] = guest
+
+    # Fetch Rooms from DB
+    db_rooms = Room.objects.all().order_by('floor', 'number')
+    rack_data = {}
+    
+    for room in db_rooms:
+        if room.floor not in rack_data:
+            rack_data[room.floor] = []
+            
+        r_id = room.number
+        status = room.status # AVAILABLE, OCCUPIED, MAINTENANCE
+        
+        guest = room_map.get(r_id)
+        guest_name = ''
+        guest_id = ''
+        
+        if status == 'OCCUPIED' and guest:
+             guest_name = f"{guest.first_name} {guest.last_name}"
+             guest_id = guest.id
+        elif guest and guest.status == 'PENDING':
+             status = 'PENDING'
+             guest_name = f"{guest.first_name} {guest.last_name}"
+             guest_id = guest.id
+            
+        rack_data[room.floor].append({
+            'id': r_id,
+            'price': room.price,
+            'status': status,
+            'guest_name': guest_name,
+            'guest_id': guest_id
+        })
+
+    return render(request, 'management/room_rack.html', {
+        'rack_data': rack_data
+    })
+
+def room_management(request):
+    if not request.session.get('is_manager'):
+        return redirect('admin_login')
+    
+    from .models import Room
+
+    if request.method == 'POST':
+        room_id = request.POST.get('room_id')
+        price_raw = request.POST.get('price', '0').replace(',', '')
+        price = float(price_raw or 0)
+        capacity = request.POST.get('capacity')
+        status = request.POST.get('status')
+        
+        try:
+            room = Room.objects.get(number=room_id)
+            room.price = price
+            room.capacity = capacity
+            room.status = status
+            room.save()
+            log_action(request, 'UPDATE_ROOM', f"Updated Room {room_id}")
+        except Room.DoesNotExist:
+            pass
+        
+        return redirect('room_management')
+
+    # Group rooms by floor
+    rooms = Room.objects.all().order_by('floor', 'number')
+    grouped_rooms = {}
+    for room in rooms:
+        if room.floor not in grouped_rooms:
+            grouped_rooms[room.floor] = []
+        grouped_rooms[room.floor].append(room)
+
+    return render(request, 'management/manage_rooms.html', {
+        'grouped_rooms': grouped_rooms
+    })
+
 def generate_guest_pdf(request, guest_id):
     if not request.session.get('is_manager'):
         return redirect('admin_login')
@@ -363,19 +511,15 @@ def generate_guest_pdf(request, guest_id):
     nights = int(guest.nights or 1)
     room_total = room_rate * nights
     
-    discount_percent = float(guest.discount_percent or 0)
-    discount_amount = room_total * (discount_percent / 100)
-    
     requests_total = sum(float(r.get('price', 0)) for r in requests_list)
     
-    grand_total = room_total - discount_amount + requests_total
+    grand_total = room_total + requests_total
 
     html_string = render_to_string('pdf/guest_registration.html', {
         'guest': guest,
         'base_dir': settings.BASE_DIR,
         'requests_list': requests_list,
         'room_total': room_total,
-        'discount_amount': discount_amount,
         'requests_total': requests_total,
         'grand_total': grand_total,
         'now': timezone.now()

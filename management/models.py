@@ -56,7 +56,14 @@ class GuestRegistration(models.Model):
     room_number = models.CharField(max_length=20, blank=True)
     room_rate = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     
-    discount_percent = models.DecimalField(max_digits=5, decimal_places=2, default=0)
+    PAYMENT_MODE_CHOICES = [
+        ('CASH', 'Cash'),
+        ('GCASH', 'GCash'),
+        ('MAYA', 'Maya'),
+        ('BANK_TRANSFER', 'Bank Transfer'),
+    ]
+    mode_of_payment = models.CharField(max_length=20, choices=PAYMENT_MODE_CHOICES, default='CASH')
+    
     additional_requests = models.TextField(blank=True, default='[]', help_text="JSON list of requests")
     total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0, help_text="Final calculated amount")
 
@@ -97,3 +104,28 @@ class AdminSettings(models.Model):
 
     def __str__(self):
         return f"System Settings (PIN: {self.pin_code})"
+
+class Amenity(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    icon = models.CharField(max_length=50, blank=True, help_text="CSS class or Emoji")
+    
+    class Meta:
+        verbose_name_plural = "Amenities"
+
+    def __str__(self):
+        return self.name
+
+class Room(models.Model):
+    number = models.CharField(max_length=10, primary_key=True)
+    floor = models.CharField(max_length=50)
+    price = models.DecimalField(max_digits=10, decimal_places=0) # Integer price
+    capacity = models.IntegerField(default=2, help_text="Max Pax")
+    status = models.CharField(max_length=20, default='AVAILABLE', choices=[('AVAILABLE', 'Available'), ('OCCUPIED', 'Occupied'), ('MAINTENANCE', 'Maintenance')])
+    
+    amenities = models.ManyToManyField(Amenity, blank=True, related_name='rooms')
+
+    class Meta:
+        ordering = ['number']
+
+    def __str__(self):
+        return f"{self.number} ({self.floor})"

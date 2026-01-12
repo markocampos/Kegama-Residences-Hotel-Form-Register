@@ -1,0 +1,96 @@
+{% extends 'management/base.html' %}
+{% load humanize %}
+
+{% block title %}Room Status Rack{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100 pb-20">
+    <!-- Navbar -->
+    <nav class="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-20 flex justify-between items-center shadow-sm">
+        <a href="{% url 'dashboard' %}" class="flex items-center gap-2 text-gray-500 hover:text-orange-600 transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            <span class="font-bold text-sm">Dashboard</span>
+        </a>
+        <span class="font-bold text-lg tracking-tight text-gray-900"><span class="text-orange-600">ROOM</span> STATUS</span>
+        
+        <!-- Legend (Hidden on small screens) -->
+        <div class="hidden md:flex gap-4 text-xs font-bold uppercase tracking-wider">
+            <div class="flex items-center gap-1"><div class="w-3 h-3 bg-green-500 rounded-full"></div> Available</div>
+            <div class="flex items-center gap-1"><div class="w-3 h-3 bg-yellow-400 rounded-full"></div> Pending</div>
+            <div class="flex items-center gap-1"><div class="w-3 h-3 bg-red-500 rounded-full"></div> Occupied</div>
+        </div>
+    </nav>
+
+    <div class="p-4 max-w-7xl mx-auto space-y-8">
+        
+        {% for floor, rooms in rack_data.items %}
+        <div>
+            <h3 class="font-bold text-gray-500 uppercase tracking-widest text-sm mb-4 pl-1 border-l-4 border-orange-500 flex items-center gap-2">
+                {{ floor }}
+                <span class="text-[10px] bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">{{ rooms|length }} Rooms</span>
+            </h3>
+            
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                {% for room in rooms %}
+                    {% if room.status == 'AVAILABLE' %}
+                        <!-- AVAILABLE CARD -->
+                        <div class="bg-white border-l-4 border-green-500 rounded-lg shadow-sm p-4 flex flex-col justify-between h-32 hover:shadow-md transition-shadow relative overflow-hidden">
+                            <div class="absolute top-0 right-0 p-1">
+                                <span class="bg-green-100 text-green-700 text-[10px] font-bold px-1.5 py-0.5 rounded">FREE</span>
+                            </div>
+                            <div>
+                                <h4 class="text-2xl font-bold text-gray-800">{{ room.id }}</h4>
+                                <p class="text-xs text-gray-400 font-mono mt-1">₱{{ room.price|intcomma }}</p>
+                            </div>
+                        </div>
+
+                    {% elif room.status == 'PENDING' and room.guest_id %}
+                        <!-- PENDING CARD -->
+                        <a href="{% url 'update_guest' room.guest_id %}" class="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg shadow-sm p-4 flex flex-col justify-between h-32 hover:shadow-md transition-shadow relative cursor-pointer group">
+                            <div class="absolute top-0 right-0 p-1">
+                                <span class="bg-yellow-200 text-yellow-800 text-[10px] font-bold px-1.5 py-0.5 rounded animate-pulse">PENDING</span>
+                            </div>
+                            <div>
+                                <h4 class="text-2xl font-bold text-gray-800">{{ room.id }}</h4>
+                                <p class="text-xs font-bold text-gray-600 truncate mt-2 group-hover:underline">{{ room.guest_name }}</p>
+                            </div>
+                            <div class="text-[10px] text-gray-400 flex items-center gap-1">
+                                Click to verify
+                            </div>
+                        </a>
+
+                    {% elif room.status == 'OCCUPIED' and room.guest_id %}
+                        <!-- OCCUPIED CARD -->
+                        <a href="{% url 'update_guest' room.guest_id %}" class="bg-red-50 border-l-4 border-red-500 rounded-lg shadow-sm p-4 flex flex-col justify-between h-32 hover:shadow-md transition-shadow relative cursor-pointer group">
+                            <div class="absolute top-0 right-0 p-1">
+                                <span class="bg-red-200 text-red-800 text-[10px] font-bold px-1.5 py-0.5 rounded">OCCUPIED</span>
+                            </div>
+                            <div>
+                                <h4 class="text-2xl font-bold text-gray-800">{{ room.id }}</h4>
+                                <p class="text-xs font-bold text-gray-900 truncate mt-2 group-hover:underline">{{ room.guest_name }}</p>
+                            </div>
+                            <div class="text-[10px] text-red-400 flex items-center gap-1 font-bold">
+                                View Details &rarr;
+                            </div>
+                        </a>
+                    
+                    {% else %}
+                        <!-- GENERIC STATUS (No Guest Link) -->
+                        <div class="bg-gray-100 border-l-4 border-gray-400 rounded-lg shadow-sm p-4 flex flex-col justify-between h-32 relative">
+                            <div class="absolute top-0 right-0 p-1">
+                                <span class="bg-gray-300 text-gray-700 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase">{{ room.status }}</span>
+                            </div>
+                            <div>
+                                <h4 class="text-2xl font-bold text-gray-500">{{ room.id }}</h4>
+                                <p class="text-xs text-gray-400 font-mono mt-1">₱{{ room.price|intcomma }}</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+
+    </div>
+</div>
+{% endblock %}

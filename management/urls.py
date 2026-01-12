@@ -13,7 +13,10 @@ urlpatterns = [
     # Management Routes
     path(f'{MGMT_PREFIX}login/', views.admin_login, name='admin_login'),
     path(f'{MGMT_PREFIX}dashboard/', views.dashboard, name='dashboard'),
+    path(f'{MGMT_PREFIX}rooms/', views.room_rack, name='room_rack'),
+    path(f'{MGMT_PREFIX}rooms/manage/', views.room_management, name='room_management'),
     path(f'{MGMT_PREFIX}analytics/', views.analytics_dashboard, name='analytics_dashboard'),
+    path(f'{MGMT_PREFIX}analytics/print/', views.print_analytics, name='print_analytics'),
     path(f'{MGMT_PREFIX}settings/', views.settings_page, name='settings_page'),
     path(f'{MGMT_PREFIX}update/<uuid:guest_id>/', views.update_guest, name='update_guest'),
     path(f'{MGMT_PREFIX}pdf/<uuid:guest_id>/', views.generate_guest_pdf, name='generate_guest_pdf'),

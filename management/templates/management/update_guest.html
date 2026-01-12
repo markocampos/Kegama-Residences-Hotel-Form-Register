@@ -1,11 +1,17 @@
 {% extends 'management/base.html' %}
-
+{% load humanize %}
 {% block title %}Guest Details{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gray-100 pb-20">
     <nav class="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-20 flex justify-between items-center shadow-sm">
-        <span class="font-bold text-lg tracking-tight text-gray-900"><span class="text-orange-600">KEGAMA</span> Admin</span>
+        <div class="flex items-center gap-3">
+            <span class="font-bold text-lg tracking-tight text-gray-900"><span class="text-orange-600">KEGAMA</span> Admin</span>
+            <button onclick="toggleGuideModal()" class="text-xs font-bold text-orange-600 border border-orange-200 bg-orange-50 hover:bg-orange-100 px-2 py-1 rounded-md flex items-center gap-1 transition-colors">
+                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Guide
+            </button>
+        </div>
         <div class="text-right">
             <div id="live-date" class="text-xs font-semibold text-orange-600 uppercase tracking-wider">-- --- ----</div>
             <div id="live-clock" class="text-lg font-bold text-gray-800 leading-tight">--:--:--</div>
@@ -105,42 +111,100 @@
                         </h3>
 
                         <div class="space-y-6">
-                            <div class="grid grid-cols-3 gap-4">
-                                <div>
-                                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Pax</label>
-                                    <input type="number" name="pax" value="{{ guest.pax }}" min="1" class="w-full border-gray-200 rounded-lg text-sm focus:ring-orange-500 font-bold bg-orange-50/50">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Nights</label>
-                                    <input type="number" name="nights" value="{{ guest.nights }}" min="1" class="w-full border-gray-200 rounded-lg text-sm focus:ring-orange-500 font-bold bg-orange-50/50">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Room #</label>
-                                    <select name="room_number" id="roomSelect" class="p-2 w-full border-gray-200 rounded-lg text-sm focus:ring-orange-500 font-bold bg-orange-50 text-orange-900" onchange="updateRoomRate()">
-                                        <option value="">Select Room</option>
-                                        {% for floor, rooms in room_data.items %}
-                                            <optgroup label="{{ floor }}">
-                                                {% for room in rooms %}
-                                                    <option value="{{ room.id }}" data-price="{{ room.price }}" {% if guest.room_number == room.id %}selected{% endif %}>
-                                                        {{ room.id }} (₱{{ room.price }})
-                                                    </option>
-                                                {% endfor %}
-                                            </optgroup>
-                                        {% endfor %}
-                                    </select>
-                                    <input type="number" step="0.01" name="room_rate" id="roomRate" value="{{ guest.room_rate }}" class="mt-1 w-full border-gray-200 rounded-lg text-[10px] bg-gray-100 text-gray-500 p-1" placeholder="Rate" readonly>
+                            
+                            <!-- PRIMARY SELECTION (Manual) -->
+                            <div class="bg-blue-50/50 p-4 rounded-xl border border-blue-100">
+                                <label class="block text-xs font-bold text-blue-800 uppercase tracking-wider mb-3">1. Primary Selection</label>
+                                <div class="grid grid-cols-1 gap-4">
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Room Selection</label>
+                                        <select name="room_number" id="roomSelect" class="p-2 w-full border-gray-200 rounded-lg text-sm focus:ring-orange-500 font-bold bg-white text-gray-900" onchange="updateRoomData()">
+                                            <option value="">Select Room</option>
+                                            {% for floor, rooms in room_data.items %}
+                                                <optgroup label="{{ floor }}">
+                                                    {% for room in rooms %}
+                                                        <option value="{{ room.id }}" data-price="{{ room.price }}" data-capacity="{{ room.capacity }}" {% if guest.room_number == room.id %}selected{% endif %}>
+                                                            {{ room.id }} (₱{{ room.price|intcomma }})
+                                                        </option>
+                                                    {% endfor %}
+                                                </optgroup>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Check-in (02:00 PM - 09:00 PM)</label>
+                                            <div class="flex flex-col gap-1">
+                                                <div class="flex flex-nowrap gap-1">
+                                                    <input required type="date" id="checkInDate" name="check_in_date" value="{{ guest.check_in_date|date:'Y-m-d' }}" class="flex-grow min-w-0 border-gray-200 rounded-lg text-sm focus:ring-blue-500 focus:border-blue-500">
+                                                    <input required type="time" id="checkInTime" name="check_in_time" value="{{ guest.check_in_time|time:'H:i' }}" class="w-24 border-gray-200 rounded-lg text-sm px-1 focus:ring-blue-500 focus:border-blue-500">
+                                                </div>
+                                                <div class="flex justify-between px-1">
+                                                    <span id="checkInDateDisplay" class="text-[10px] font-semibold text-blue-600 tracking-wide">--</span>
+                                                    <span id="checkInTimeDisplay" class="text-[10px] font-semibold text-blue-600 tracking-wide">--</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Nights</label>
+                                            <div class="relative">
+                                                <input type="number" id="nightsInput" name="nights" value="{{ guest.nights }}" min="0" class="w-full border-gray-200 rounded-lg text-sm focus:ring-orange-500 font-bold bg-white pl-3 pr-8">
+                                                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                                    <span class="text-gray-400 text-xs font-medium" id="nightsLabel">{% if guest.nights == 0 %}Short Stay{% else %}nights{% endif %}</span>
+                                                </div>
+                                            </div>
+                                            <div class="flex gap-1 mt-2 justify-end">
+                                                <button type="button" onclick="applyDuration(6)" class="text-[10px] bg-blue-50 text-blue-600 border border-blue-100 px-2 py-1 rounded hover:bg-blue-100 font-bold transition-colors">6H</button>
+                                                <button type="button" onclick="applyDuration(10)" class="text-[10px] bg-blue-50 text-blue-600 border border-blue-100 px-2 py-1 rounded hover:bg-blue-100 font-bold transition-colors">10H</button>
+                                                <button type="button" onclick="applyDuration(22)" class="text-[10px] bg-blue-50 text-blue-600 border border-blue-100 px-2 py-1 rounded hover:bg-blue-100 font-bold transition-colors">22H</button>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- DISCOUNT & REQUESTS -->
-                             <div>
-                                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Discount (%)</label>
-                                <div class="relative">
-                                    <input type="number" name="discount_percent" value="{{ guest.discount_percent|floatformat:0 }}" min="0" max="100" step="1" class="w-full border-gray-200 rounded-lg text-sm pr-8 focus:ring-orange-500 font-bold">
-                                    <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                        <span class="text-gray-500 sm:text-sm">%</span>
+                            <!-- AUTO DETAILS (Derived) -->
+                            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                                <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">2. Stay & Pricing</label>
+                                <div class="grid grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Room Rate</label>
+                                        <div class="relative">
+                                            <div class="absolute inset-y-0 left-0 flex items-center pl-2 pointer-events-none">
+                                                <span class="text-gray-500 text-[10px]">₱</span>
+                                            </div>
+                                            <input type="text" name="room_rate" id="roomRate" value="{{ guest.room_rate|floatformat:0|intcomma }}" class="w-full border-gray-200 rounded-lg text-sm bg-white text-gray-900 font-bold p-2 pl-5" oninput="this.value = this.value.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',')">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Pax</label>
+                                        <input type="number" name="pax" id="paxInput" value="{{ guest.pax }}" min="1" class="w-full border-gray-200 rounded-lg text-sm bg-white text-gray-900 font-bold focus:ring-orange-500 transition-colors">
+                                    </div>
+                                    <div>
+                                        <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Check-out (12:00 NN)</label>
+                                        <div class="flex flex-col gap-1">
+                                            <div class="flex flex-nowrap gap-1">
+                                                <input required type="date" id="checkOutDate" name="check_out_date" value="{{ guest.check_out_date|date:'Y-m-d' }}" class="flex-grow min-w-0 border-gray-200 rounded-lg text-sm font-bold text-gray-900 bg-white focus:ring-orange-500 focus:border-orange-500">
+                                                <input required type="time" id="checkOutTime" name="check_out_time" value="{{ guest.check_out_time|time:'H:i' }}" class="w-20 border-gray-200 rounded-lg text-sm px-1 bg-white text-gray-900 focus:ring-orange-500 focus:border-orange-500">
+                                            </div>
+                                            <div class="flex justify-between px-1">
+                                                <span id="checkOutDateDisplay" class="text-[10px] font-semibold text-orange-600 tracking-wide">--</span>
+                                                <span id="checkOutTimeDisplay" class="text-[10px] font-semibold text-orange-600 tracking-wide">--</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
+                            </div>
+
+                            <!-- FINANCIALS -->
+                             <div class="pt-2">
+                                <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Mode of Payment</label>
+                                <select name="mode_of_payment" class="p-2 w-full border-gray-200 rounded-lg text-sm focus:ring-orange-500 font-bold">
+                                    <option value="CASH" {% if guest.mode_of_payment == 'CASH' %}selected{% endif %}>CASH</option>
+                                    <option value="GCASH" {% if guest.mode_of_payment == 'GCASH' %}selected{% endif %}>GCASH</option>
+                                    <option value="MAYA" {% if guest.mode_of_payment == 'MAYA' %}selected{% endif %}>MAYA</option>
+                                    <option value="BANK_TRANSFER" {% if guest.mode_of_payment == 'BANK_TRANSFER' %}selected{% endif %}>BANK TRANSFER</option>
+                                </select>
                             </div>
 
                             <div class="border-t pt-4">
@@ -149,7 +213,7 @@
                                     {% for req in current_requests %}
                                     <div class="flex gap-2 items-center request-row">
                                         <input type="text" name="request_item[]" value="{{ req.item }}" placeholder="Item Name" class="flex-grow border-gray-200 rounded-lg text-sm">
-                                        <input type="number" step="0.01" name="request_price[]" value="{{ req.price }}" placeholder="Price" class="w-24 border-gray-200 rounded-lg text-sm">
+                                        <input type="text" name="request_price[]" value="{{ req.price|floatformat:0|intcomma }}" placeholder="Price" class="w-24 border-gray-200 rounded-lg text-sm" oninput="this.value = this.value.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',')">
                                         <button type="button" onclick="this.closest('.request-row').remove()" class="text-red-500 hover:text-red-700 bg-red-50 p-1 rounded">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                         </button>
@@ -168,7 +232,7 @@
                                     div.className = 'flex gap-2 items-center request-row';
                                     div.innerHTML = `
                                         <input type="text" name="request_item[]" placeholder="Item Name" class="flex-grow border-gray-200 rounded-lg text-sm">
-                                        <input type="number" step="0.01" name="request_price[]" placeholder="Price" value="0" class="w-24 border-gray-200 rounded-lg text-sm">
+                                        <input type="text" name="request_price[]" placeholder="Price" value="0" class="w-24 border-gray-200 rounded-lg text-sm" oninput="this.value = this.value.replace(/\\D/g, '').replace(/\\B(?=(\\d{3})+(?!\\d))/g, ',')">
                                         <button type="button" onclick="this.closest('.request-row').remove()" class="text-red-500 hover:text-red-700 bg-red-50 p-1 rounded">
                                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                                         </button>
@@ -176,28 +240,181 @@
                                     document.getElementById('requests-container').appendChild(div);
                                 }
 
-                                function updateRoomRate() {
+                                function updateRoomData() {
                                     const select = document.getElementById('roomSelect');
                                     const option = select.options[select.selectedIndex];
                                     const price = option.getAttribute('data-price');
+                                    const capacity = option.getAttribute('data-capacity');
+
                                     if (price) {
-                                        document.getElementById('roomRate').value = price;
+                                        // Format with commas and remove decimals
+                                        const formattedPrice = Math.floor(price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                                        document.getElementById('roomRate').value = formattedPrice;
+                                    }
+                                    
+                                    if (capacity) {
+                                        document.getElementById('paxInput').value = capacity;
                                     }
                                 }
-                            </script>
 
-                            <div class="grid grid-cols-2 gap-4">
-                                <div>
-                                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Check-in</label>
-                                    <input required type="date" name="check_in_date" value="{{ guest.check_in_date|date:'Y-m-d' }}" class="w-full border-gray-200 rounded-lg text-sm mb-1">
-                                    <input required type="time" name="check_in_time" value="{{ guest.check_in_time|time:'H:i' }}" class="w-full border-gray-200 rounded-lg text-sm">
-                                </div>
-                                <div>
-                                    <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Check-out</label>
-                                    <input required type="date" name="check_out_date" value="{{ guest.check_out_date|date:'Y-m-d' }}" class="w-full border-gray-200 rounded-lg text-sm mb-1">
-                                    <input required type="time" name="check_out_time" value="{{ guest.check_out_time|time:'H:i' }}" class="w-full border-gray-200 rounded-lg text-sm">
-                                </div>
-                            </div>
+                                function applyDuration(hours) {
+                                    const checkInDate = document.getElementById('checkInDate');
+                                    const checkInTime = document.getElementsByName('check_in_time')[0];
+                                    const checkOutDate = document.getElementById('checkOutDate');
+                                    const checkOutTime = document.getElementsByName('check_out_time')[0];
+                                    const nightsInput = document.getElementById('nightsInput');
+                                    
+                                    if (!checkInDate.value || !checkInTime.value) {
+                                        alert("Please set Check-in Date and Time first.");
+                                        return;
+                                    }
+
+                                    const start = new Date(checkInDate.value + 'T' + checkInTime.value);
+                                    // Calculate relative end time based on hours
+                                    const end = new Date(start.getTime() + (hours * 60 * 60 * 1000));
+                                    
+                                    const hoursStr = String(end.getHours()).padStart(2, '0');
+                                    const minsStr = String(end.getMinutes()).padStart(2, '0');
+                                    checkOutTime.value = `${hoursStr}:${minsStr}`;
+
+                                    // If we already have > 1 nights set, assume the user wants to apply the 
+                                    // duration logic to the *time* only (e.g. standard check-out time),
+                                    // but keep the days length.
+                                    // Otherwise, we calculate the full date based on the duration.
+                                    if (nightsInput && parseInt(nightsInput.value) > 1) {
+                                        // Keep current checkOutDate, only update time (done above)
+                                        // Trigger time display update only
+                                        checkOutTime.dispatchEvent(new Event('input'));
+                                    } else {
+                                        const year = end.getFullYear();
+                                        const month = String(end.getMonth() + 1).padStart(2, '0');
+                                        const day = String(end.getDate()).padStart(2, '0');
+                                        checkOutDate.value = `${year}-${month}-${day}`;
+                                        
+                                        // Trigger updates for nights calculation
+                                        checkOutDate.dispatchEvent(new Event('change'));
+                                    }
+                                }
+
+                                // Sync Nights and Dates
+                                document.addEventListener('DOMContentLoaded', function() {
+                                    // Phone Formatting
+                                    const phoneInput = document.querySelector('input[name="phone"]');
+                                    if(phoneInput) {
+                                        phoneInput.addEventListener('input', function(e) {
+                                            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,4})(\d{0,3})(\d{0,4})/);
+                                            e.target.value = !x[2] ? x[1] : x[1] + ' ' + x[2] + (x[3] ? ' ' + x[3] : '');
+                                        });
+                                    }
+
+                                    const nightsInput = document.getElementById('nightsInput');
+                                    const checkInDate = document.getElementById('checkInDate');
+                                    const checkInTime = document.getElementById('checkInTime');
+                                    const checkOutDate = document.getElementById('checkOutDate');
+                                    const checkOutTime = document.getElementById('checkOutTime');
+                                    
+                                    const checkInDisplay = document.getElementById('checkInDateDisplay');
+                                    const checkInTimeDisplay = document.getElementById('checkInTimeDisplay');
+                                    const checkOutDisplay = document.getElementById('checkOutDateDisplay');
+                                    const checkOutTimeDisplay = document.getElementById('checkOutTimeDisplay');
+                                    const nightsLabel = document.getElementById('nightsLabel');
+
+                                    function updateNightsLabel() {
+                                        if (nightsInput && nightsLabel) {
+                                            if (parseInt(nightsInput.value) === 0) {
+                                                nightsLabel.textContent = "Short Stay";
+                                            } else {
+                                                nightsLabel.textContent = "nights";
+                                            }
+                                        }
+                                    }
+
+                                    function formatDateDisplay(dateString) {
+                                        if (!dateString) return '--';
+                                        const date = new Date(dateString);
+                                        return date.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+                                    }
+
+                                    function formatTimeDisplay(timeString) {
+                                        if (!timeString) return '--';
+                                        const [hours, minutes] = timeString.split(':');
+                                        let h = parseInt(hours);
+                                        const m = minutes;
+                                        const ampm = h >= 12 ? 'PM' : 'AM';
+                                        h = h % 12;
+                                        h = h ? h : 12;
+                                        return `${h}:${m} ${ampm}`;
+                                    }
+
+                                    function updateTimeDisplays() {
+                                        if (checkInTime) checkInTimeDisplay.innerText = formatTimeDisplay(checkInTime.value);
+                                        if (checkOutTime) checkOutTimeDisplay.innerText = formatTimeDisplay(checkOutTime.value);
+                                    }
+
+                                    function updateCheckOutFromNights() {
+                                        if (checkInDate.value) {
+                                            checkInDisplay.innerText = formatDateDisplay(checkInDate.value);
+                                            updateTimeDisplays();
+                                            
+                                            if (nightsInput.value !== '') {
+                                                const date = new Date(checkInDate.value);
+                                                const nights = parseInt(nightsInput.value);
+                                                date.setDate(date.getDate() + nights);
+                                                
+                                                const year = date.getFullYear();
+                                                const month = String(date.getMonth() + 1).padStart(2, '0');
+                                                const day = String(date.getDate()).padStart(2, '0');
+                                                const nextDateStr = `${year}-${month}-${day}`;
+                                                
+                                                checkOutDate.value = nextDateStr;
+                                                checkOutDisplay.innerText = formatDateDisplay(nextDateStr);
+                                            }
+                                        }
+                                    }
+
+                                    function updateNightsFromDates() {
+                                        if (checkOutDate.value) {
+                                            checkOutDisplay.innerText = formatDateDisplay(checkOutDate.value);
+                                            updateTimeDisplays();
+                                            
+                                            if (checkInDate.value) {
+                                                const start = new Date(checkInDate.value);
+                                                const end = new Date(checkOutDate.value);
+                                                const diffTime = end - start;
+                                                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                                
+                                                if (diffDays >= 0) {
+                                                    nightsInput.value = diffDays;
+                                                } else {
+                                                    // Invalid range, reset to 1 night
+                                                    nightsInput.value = 1;
+                                                    updateCheckOutFromNights();
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    if(nightsInput && checkInDate && checkOutDate) {
+                                        nightsInput.addEventListener('input', function() {
+                                            updateCheckOutFromNights();
+                                            updateNightsLabel();
+                                        });
+                                        checkInDate.addEventListener('change', updateCheckOutFromNights);
+                                        checkInTime.addEventListener('input', updateTimeDisplays);
+                                        checkOutDate.addEventListener('change', function() {
+                                            updateNightsFromDates();
+                                            updateNightsLabel();
+                                        });
+                                        checkOutTime.addEventListener('input', updateTimeDisplays);
+                                        
+                                        // Initialize
+                                        updateCheckOutFromNights();
+                                        updateNightsFromDates();
+                                        updateTimeDisplays();
+                                        updateNightsLabel();
+                                    }
+                                });
+                            </script>
 
                             <div class="pt-4">
                                 <label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Security Deposit (PHP)</label>
@@ -205,7 +422,7 @@
                                     <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
                                         <span class="text-gray-500 sm:text-sm">₱</span>
                                     </div>
-                                    <input required type="number" step="0.01" name="security_deposit" value="{{ guest.security_deposit }}" class="w-full border-gray-200 rounded-lg text-sm pl-7 focus:ring-orange-500 font-bold text-lg">
+                                    <input required type="text" name="security_deposit" value="{{ guest.security_deposit|floatformat:0|intcomma }}" class="w-full border-gray-200 rounded-lg text-sm pl-7 focus:ring-orange-500 font-bold text-lg" oninput="this.value = this.value.replace(/\D/g, '').replace(/\B(?=(\d{3})+(?!\d))/g, ',')">
                                 </div>                            </div>
 
                             <div>
@@ -234,4 +451,6 @@
         </form>
     </div>
 </div>
+
+{% include 'management/guide_modal.html' %}
 {% endblock %}

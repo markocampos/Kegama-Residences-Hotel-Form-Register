@@ -15,8 +15,15 @@
 
     <div class="p-6 max-w-6xl mx-auto space-y-6">
         
+        <div class="flex justify-end">
+            <a href="{% url 'print_analytics' %}" target="_blank" class="bg-gray-800 text-white hover:bg-gray-900 font-bold py-2 px-4 rounded-lg flex items-center gap-2 text-sm">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                Print Income Report
+            </a>
+        </div>
+
         <!-- SUMMARY CARDS -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                 <div class="flex items-center gap-4">
                     <div class="p-3 bg-green-100 text-green-600 rounded-lg">
@@ -40,20 +47,42 @@
                     </div>
                 </div>
             </div>
+
+            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <div class="flex items-center gap-4">
+                    <div class="p-3 bg-orange-100 text-orange-600 rounded-lg">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-gray-500">Guests Today</p>
+                        <h2 class="text-3xl font-bold text-gray-900">{{ guests_today }}</h2>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             
             <!-- CUSTOM REVENUE CHART (CSS-ONLY) -->
             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200 lg:col-span-2 flex flex-col">
-                <h3 class="font-bold text-gray-800 mb-6 flex items-center gap-2">
-                    <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                    Daily Revenue Trend
-                </h3>
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                    <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                        <svg class="w-5 h-5 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+                        Revenue Trend <span class="text-gray-400 text-sm font-normal ml-1">({{ current_filter|title }})</span>
+                    </h3>
+                    
+                    <!-- Filter Buttons -->
+                    <div class="flex bg-gray-100 p-1 rounded-lg">
+                        <a href="?filter=daily" class="px-3 py-1 rounded-md text-xs font-bold transition-all {% if current_filter == 'daily' %}bg-white text-gray-800 shadow-sm{% else %}text-gray-500 hover:text-gray-700{% endif %}">Daily</a>
+                        <a href="?filter=weekly" class="px-3 py-1 rounded-md text-xs font-bold transition-all {% if current_filter == 'weekly' %}bg-white text-gray-800 shadow-sm{% else %}text-gray-500 hover:text-gray-700{% endif %}">Weekly</a>
+                        <a href="?filter=monthly" class="px-3 py-1 rounded-md text-xs font-bold transition-all {% if current_filter == 'monthly' %}bg-white text-gray-800 shadow-sm{% else %}text-gray-500 hover:text-gray-700{% endif %}">Monthly</a>
+                        <a href="?filter=yearly" class="px-3 py-1 rounded-md text-xs font-bold transition-all {% if current_filter == 'yearly' %}bg-white text-gray-800 shadow-sm{% else %}text-gray-500 hover:text-gray-700{% endif %}">Yearly</a>
+                    </div>
+                </div>
                 
-                <div class="flex-grow flex items-end gap-2 h-64 border-b border-gray-200 pb-2 relative">
+                <div class="flex-grow flex items-end gap-2 h-64 border-b border-gray-200 pb-2 relative overflow-x-auto">
                     <!-- Grid Lines -->
-                    <div class="absolute inset-0 pointer-events-none flex flex-col justify-between">
+                    <div class="absolute inset-0 pointer-events-none flex flex-col justify-between w-full min-w-full">
                         <div class="border-t border-gray-100 w-full h-0"></div>
                         <div class="border-t border-gray-100 w-full h-0"></div>
                         <div class="border-t border-gray-100 w-full h-0"></div>
@@ -61,32 +90,72 @@
                     </div>
 
                     {% for day in daily_revenue %}
-                    <div class="relative group flex-1 flex flex-col justify-end items-center h-full hover:bg-gray-50 rounded-t transition-colors cursor-default">
+                    <div class="relative group flex-1 flex flex-col justify-end items-center h-full hover:bg-gray-50 rounded-t transition-colors cursor-default min-w-[30px]">
                         <!-- Bar -->
-                        <div class="w-full max-w-[40px] bg-orange-500 rounded-t hover:bg-orange-600 transition-all shadow-sm relative"
-                             style="height: {% widthratio day.revenue max_revenue 100 %}%;">
-                             
-                            <!-- Tooltip -->
-                            <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block bg-gray-900 text-white text-xs py-1 px-2 rounded whitespace-nowrap z-10 font-bold shadow-lg">
-                                {{ day.date|date:"M d" }}<br>
-                                ₱{{ day.revenue|intcomma }}
-                                <div class="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1 border-4 border-transparent border-t-gray-900"></div>
-                            </div>
+                        <div class="chart-bar w-full max-w-[40px] bg-orange-500 rounded-t hover:bg-orange-600 transition-all shadow-sm"
+                             style="height: {% widthratio day.revenue max_revenue 100 %}%;"
+                             data-date="{{ day.date|date:'M d, Y' }}"
+                             data-revenue="₱{{ day.revenue|intcomma }}">
                         </div>
                         
                         <!-- Date Label -->
                         <div class="mt-2 text-[10px] text-gray-400 font-bold rotate-0 md:rotate-0 truncate w-full text-center">
-                            {{ day.date|date:"d" }}
+                            {% if current_filter == 'yearly' %}
+                                {{ day.date|date:"Y" }}
+                            {% elif current_filter == 'monthly' %}
+                                {{ day.date|date:"M" }}
+                            {% elif current_filter == 'weekly' %}
+                                {{ day.date|date:"M d" }}
+                            {% else %}
+                                {{ day.date|date:"d" }}
+                            {% endif %}
                         </div>
                     </div>
                     {% empty %}
-                    <div class="w-full h-full flex items-center justify-center text-gray-400 text-sm italic">
+                    <div class="w-full h-full flex items-center justify-center text-gray-400 text-sm italic min-w-full">
                         No revenue data yet.
                     </div>
                     {% endfor %}
                 </div>
-                <div class="text-center text-xs text-gray-400 mt-2 font-bold uppercase tracking-widest">Day of Month</div>
+                <div class="text-center text-xs text-gray-400 mt-2 font-bold uppercase tracking-widest">
+                    {% if current_filter == 'yearly' %}Year{% elif current_filter == 'monthly' %}Month{% elif current_filter == 'weekly' %}Week Of{% else %}Day{% endif %}
+                </div>
             </div>
+
+            <!-- Tooltip Element -->
+            <div id="chart-tooltip" class="fixed hidden pointer-events-none bg-gray-900 text-white text-xs py-1.5 px-3 rounded shadow-xl z-50 font-bold transform -translate-x-1/2 -translate-y-full mt-[-8px]">
+                <div id="tooltip-date" class="text-gray-400 text-[10px] uppercase tracking-wider mb-0.5"></div>
+                <div id="tooltip-value" class="text-sm"></div>
+                <!-- Little Triangle -->
+                <div class="absolute top-full left-1/2 transform -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+            </div>
+
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    const tooltip = document.getElementById('chart-tooltip');
+                    const tooltipDate = document.getElementById('tooltip-date');
+                    const tooltipValue = document.getElementById('tooltip-value');
+                    const bars = document.querySelectorAll('.chart-bar');
+
+                    bars.forEach(bar => {
+                        bar.addEventListener('mousemove', (e) => {
+                            const date = bar.getAttribute('data-date');
+                            const revenue = bar.getAttribute('data-revenue');
+
+                            tooltipDate.textContent = date;
+                            tooltipValue.textContent = revenue;
+
+                            tooltip.style.left = e.clientX + 'px';
+                            tooltip.style.top = e.clientY + 'px';
+                            tooltip.classList.remove('hidden');
+                        });
+
+                        bar.addEventListener('mouseleave', () => {
+                            tooltip.classList.add('hidden');
+                        });
+                    });
+                });
+            </script>
 
             <!-- CUSTOM SOURCE LIST (CSS-ONLY) -->
             <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
