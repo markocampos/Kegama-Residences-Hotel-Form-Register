@@ -3,32 +3,74 @@
 {% block title %}Application Status{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-6">
-
-    <div class="w-full max-w-sm bg-white rounded-2xl shadow-xl border border-gray-100 p-8 text-center relative overflow-hidden">
-        
-        <!-- Status Indicator -->
-        <div class="absolute top-0 left-0 w-full h-2 bg-yellow-400"></div>
-
-        <div class="w-20 h-20 bg-yellow-50 rounded-full flex items-center justify-center mx-auto mb-6">
-            <svg class="w-10 h-10 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        </div>
-
-        <h2 class="text-2xl font-bold text-gray-800 mb-2">Check-in Pending</h2>
-        <p class="text-sm text-gray-500 mb-8">
-            Your check-in for <span class="font-bold text-gray-700">{{ guest_name|default:"Guest" }}</span> is currently being processed by our front desk.
-        </p>
-
-        <div class="space-y-4">
-            <div class="bg-gray-50 p-4 rounded-xl text-xs text-left text-gray-600 border border-gray-200">
-                <p class="font-semibold mb-1">What happens next?</p>
-                <p>Please present your ID at the counter. Once your check-in is approved, you will receive your room key.</p>
-            </div>
-        </div>
-
-    </div>
+<div class="min-h-screen flex items-center justify-center bg-[#FFF7ED] relative overflow-hidden p-6">
     
-    <p class="mt-8 text-xs text-gray-400">Application ID: <span class="font-mono">{{ guest_id|truncatechars:8 }}</span></p>
+    <div class="absolute -top-24 -left-24 w-96 h-96 bg-orange-200 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-pulse"></div>
+    <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-orange-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-pulse" style="animation-delay: 2s;"></div>
 
+    <div class="relative w-full max-w-[420px]">
+        <div class="bg-white/90 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_32px_64px_-15px_rgba(234,88,12,0.15)] border border-orange-100/50 p-10 text-center relative overflow-hidden">
+            
+            <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-orange-400 via-orange-600 to-orange-400"></div>
+
+            <div class="relative mb-8 flex justify-center">
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="w-24 h-24 border-4 border-orange-100 border-t-orange-600 rounded-full animate-spin duration-700"></div>
+                </div>
+                
+                <div class="relative w-16 h-16 bg-orange-600 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-200 transform rotate-3">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <h2 class="text-3xl font-black text-gray-900 tracking-tight mb-2">Check-in Pending</h2>
+            <p class="text-orange-600/70 font-bold uppercase text-[10px] tracking-[0.2em] mb-6">Processing at Front Desk</p>
+            
+            <p class="text-gray-500 text-sm leading-relaxed mb-8 px-2">
+                Hello <span class="text-gray-900 font-bold">{{ guest_name|default:"Guest" }}</span>, we are currently finalizing your registration.
+            </p>
+
+            <div class="bg-gray-50/80 border border-gray-100 p-6 rounded-3xl text-left relative group hover:bg-white transition-colors">
+                <div class="flex items-start gap-4">
+                    <div class="flex-shrink-0 w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                        <span class="text-orange-600 text-xs font-black">1</span>
+                    </div>
+                    <div>
+                        <p class="text-gray-900 font-bold text-xs uppercase tracking-wider mb-1">Next Step</p>
+                        <p class="text-gray-500 text-xs leading-relaxed">Please present your <strong>Valid ID</strong> at the counter for verification and to claim your key.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 pt-8 border-t border-gray-50 flex items-center justify-center gap-3">
+                <div class="flex space-x-1">
+                    <div class="w-1.5 h-1.5 bg-orange-600 rounded-full animate-bounce"></div>
+                    <div class="w-1.5 h-1.5 bg-orange-600 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                    <div class="w-1.5 h-1.5 bg-orange-600 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                </div>
+                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Waiting for Approval</span>
+            </div>
+
+        </div>
+
+        <div class="mt-8 text-center">
+            <span class="px-4 py-2 bg-gray-900/5 backdrop-blur-sm rounded-full text-[10px] font-mono text-gray-400 tracking-wider">
+                ID: {{ guest_id|truncatechars:18 }}
+            </span>
+        </div>
+    </div>
 </div>
+
+<style>
+    /* Slow spin for the outer ring */
+    .animate-spin {
+        animation: spin 3s linear infinite;
+    }
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+</style>
 {% endblock %}

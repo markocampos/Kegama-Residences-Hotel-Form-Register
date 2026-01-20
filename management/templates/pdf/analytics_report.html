@@ -3,104 +3,108 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Revenue Report</title>
+    <title>Financial Report</title>
     <style>
         @page {
             size: A4;
-            margin: 0.5in;
+            margin: 1in;
         }
         
         body {
             font-family: "Helvetica", "Arial", sans-serif; 
-            font-size: 12px;
-            color: #1a1a1a;
-            line-height: 1.4;
+            font-size: 11px;
+            color: #000;
+            line-height: 1.2;
         }
 
         .header {
-            text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #ea580c;
+            margin-bottom: 50px;
+            border-bottom: 1px solid #000;
             padding-bottom: 20px;
         }
 
         .logo {
-            width: 80px;
-            margin-bottom: 10px;
+            width: 60px;
+            margin-bottom: 15px;
         }
 
         h1 {
-            font-size: 24px;
+            font-size: 18px;
+            font-weight: 900;
             margin: 0;
-            color: #ea580c;
+            color: #000;
             text-transform: uppercase;
+            letter-spacing: 2px;
         }
 
         .meta {
             color: #666;
-            font-size: 10px;
-            margin-top: 5px;
-        }
-
-        .summary-box {
-            background-color: #fff7ed;
-            border: 1px solid #fdba74;
-            padding: 15px;
-            margin-bottom: 30px;
-            border-radius: 5px;
+            font-size: 9px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 8px;
         }
 
         .summary-grid {
             display: table;
             width: 100%;
+            margin-bottom: 50px;
         }
 
         .summary-item {
             display: table-cell;
             width: 50%;
-            text-align: center;
+            vertical-align: top;
         }
 
         .summary-label {
-            font-size: 10px;
+            font-size: 9px;
             text-transform: uppercase;
-            color: #ea580c;
+            color: #666;
             font-weight: bold;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
         }
 
         .summary-value {
-            font-size: 20px;
-            font-weight: bold;
-            margin-top: 5px;
+            font-size: 24px;
+            font-weight: 900;
+            color: #000;
+        }
+
+        .section-title {
+            font-size: 10px;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
         }
 
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
         }
 
         th {
-            background-color: #4b5563;
-            color: white;
-            padding: 10px;
+            padding: 12px 0;
             text-align: left;
-            font-size: 10px;
+            font-size: 9px;
             text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #000;
+            color: #000;
         }
 
         td {
-            padding: 10px;
-            border-bottom: 1px solid #e5e7eb;
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+            color: #333;
         }
 
-        tr:nth-child(even) {
-            background-color: #f9fafb;
-        }
-
-        .text-right {
-            text-align: right;
-        }
+        .font-bold { font-weight: bold; }
+        .text-right { text-align: right; }
 
         .footer {
             position: fixed;
@@ -108,59 +112,59 @@
             left: 0;
             right: 0;
             text-align: center;
-            font-size: 9px;
-            color: #9ca3af;
-            border-top: 1px solid #e5e7eb;
-            padding-top: 10px;
+            font-size: 8px;
+            color: #999;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
         }
     </style>
 </head>
 <body>
     <div class="header">
         <img src="file://{{ base_dir }}/static/images/logo.png" class="logo" alt="Logo">
-        <h1>Annual Revenue Report</h1>
-        <div class="meta">Generated on: {{ generated_at|date:"F d, Y h:i A" }}</div>
+        <h1>Financial Performance Report</h1>
+        <div class="meta">Period: Last 12 Months &bull; Generated: {{ generated_at|date:"M d, Y" }}</div>
     </div>
 
-    <div class="summary-box">
-        <div class="summary-grid">
-            <div class="summary-item">
-                <div class="summary-label">Total Annual Revenue</div>
-                <div class="summary-value">P {{ total_revenue|intcomma }}</div>
-            </div>
-            <div class="summary-item">
-                <div class="summary-label">Total Guests</div>
-                <div class="summary-value">{{ total_guests }}</div>
-            </div>
+    <div class="summary-grid">
+        <div class="summary-item">
+            <div class="summary-label">Total Gross Revenue</div>
+            <div class="summary-value">PHP {{ total_revenue|intcomma }}</div>
+        </div>
+        <div class="summary-item">
+            <div class="summary-label">Total Volume</div>
+            <div class="summary-value">{{ total_guests }} <span style="font-size: 12px; color: #999; font-weight: normal;">GUESTS</span></div>
         </div>
     </div>
 
-    <h3>Monthly Breakdown (Last 12 Months)</h3>
+    <div class="section-title">Monthly Breakdown</div>
     <table>
         <thead>
             <tr>
-                <th>Month</th>
-                <th class="text-right">Guests</th>
+                <th>Month / Year</th>
+                <th class="text-right">Total Guests</th>
                 <th class="text-right">Revenue (PHP)</th>
             </tr>
         </thead>
         <tbody>
             {% for m in monthly_data %}
             <tr>
-                <td>{{ m.month|date:"F Y" }}</td>
+                <td class="font-bold" style="color: #000;">{{ m.month|date:"F Y"|upper }}</td>
                 <td class="text-right">{{ m.guests }}</td>
-                <td class="text-right font-bold">{{ m.revenue|intcomma }}</td>
+                <td class="text-right font-bold" style="color: #000;">{{ m.revenue|intcomma }}</td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="3" style="text-align: center; color: #999;">No data available for the past year.</td>
+                <td colspan="3" style="text-align: center; padding: 40px; color: #999;">No data matches the selected timeframe.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
 
     <div class="footer">
-        CONFIDENTIAL REPORT • KEGAMA RESIDENCES MANAGEMENT SYSTEM
+        Kegama Residences Management &bull; Internal Use Only &bull; Confidential
     </div>
 </body>
 </html>

@@ -1,0 +1,179 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Schedule Report - {{ current_month|date:"F Y" }}</title>
+    <style>
+        @page {
+            size: Letter landscape;
+            margin: 10mm;
+        }
+        
+        body {
+            font-family: "Helvetica", "Arial", sans-serif; 
+            font-size: 8px;
+            color: #000;
+            line-height: 1.1;
+        }
+
+        .header {
+            margin-bottom: 20px;
+            border-bottom: 1px solid #000;
+            padding-bottom: 10px;
+        }
+
+        h1 {
+            font-size: 14px;
+            font-weight: 900;
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .meta {
+            font-size: 7px;
+            color: #666;
+            margin-top: 4px;
+            text-transform: uppercase;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }
+
+        th, td {
+            border: 0.2px solid #ddd;
+            padding: 0; /* Remove padding for seamless bars */
+            text-align: center;
+            height: 24px;
+            vertical-align: middle;
+            position: relative; /* Base for absolute positioning */
+        }
+
+        .room-col {
+            width: 45px;
+            text-align: left;
+            padding-left: 6px !important;
+            font-weight: 900;
+            background-color: #fff;
+            border-right: 1px solid #000;
+            font-size: 9px;
+            position: sticky;
+            left: 0;
+            z-index: 100;
+        }
+
+        .day-header {
+            width: 22px;
+            background-color: #fcfcfc;
+            font-size: 7px;
+            padding: 4px 0 !important;
+        }
+
+        .stay-bar {
+            background-color: #000;
+            color: #fff;
+            font-size: 6px;
+            font-weight: 900;
+            height: 16px; 
+            margin: 4px 0;
+            display: block;
+            width: 100%;
+            position: relative;
+        }
+
+        .stay-bar-pending {
+            background-color: #fbbf24; /* Yellow 400 */
+            color: #000;
+        }
+
+        .bar-start {
+            border-top-left-radius: 4px;
+            border-bottom-left-radius: 4px;
+            margin-left: 2px;
+            width: auto;
+            margin-right: 0;
+        }
+
+        .guest-name-label {
+            position: absolute;
+            left: 6px;
+            top: 50%;
+            transform: translateY(-50%);
+            white-space: nowrap;
+            z-index: 50;
+            pointer-events: none;
+            text-shadow: 0 0 2px rgba(0,0,0,0.2);
+        }
+
+        .bar-start .guest-name-label {
+            display: block;
+        }
+
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 7px;
+            color: #bbb;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-top: 0.5px solid #eee;
+            padding-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Occupancy Timeline: {{ current_month|date:"F Y" }}</h1>
+        <div class="meta">Kegama Residences &bull; CONFIDENTIAL &bull; Generated: {{ generated_at|date:"M d, Y H:i" }}</div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th class="room-col">ROOM</th>
+                {% for day in days_range %}
+                <th class="day-header" style="{% if day == today %}background-color: #fff7ed; color: #ea580c;{% endif %}">
+                    {{ day|date:"D"|slice:":1" }}<br>{{ day.day }}
+                </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for room in rooms %}
+            <tr>
+                <td class="room-col">
+                    {{ room.number }}
+                    <div style="font-size: 5px; color: #aaa; font-weight: normal;">FLR {{ room.floor|upper|cut:"FLOOR" }}</div>
+                </td>
+                {% for day in days_range %}
+                <td style="{% if day == today %}background-color: #fffaf0;{% endif %}">
+                    {% for r_num, guests in booking_map.items %}
+                        {% if r_num == room.number %}
+                            {% for g in guests %}
+                                {% if g.check_in_date <= day and day < g.check_out_date %}
+                                    <div class="stay-bar {% if g.status == 'PENDING' %}stay-bar-pending{% endif %} 
+                                                {% if g.check_in_date == day %}bar-start{% endif %}">
+                                        {% if g.check_in_date == day %}
+                                            <span class="guest-name-label" style="{% if g.status == 'PENDING' %}color: #000;{% else %}color: #fff;{% endif %}">{{ g.last_name }}</span>
+                                        {% endif %}
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    {% endfor %}
+                </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        Property of Kegama Residences &bull; Internal Performance Data
+    </div>
+</body>
+</html>

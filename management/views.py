@@ -1,16 +1,20 @@
+import json
+import calendar as py_calendar
+from datetime import date, datetime, timedelta
+
 import weasyprint
-import json
 from django.conf import settings
-from django.shortcuts import render, get_object_or_404, redirect
+from django.db.models import Sum, Count, F, Q
+from django.db.models.functions import TruncMonth, TruncDate, TruncWeek, TruncYear
 from django.http import HttpResponse
+from django.shortcuts import render, get_object_or_404, redirect
 from django.template.loader import render_to_string
-from .models import GuestRegistration, AuditLog, Room
-from django.views.decorators.http import require_POST
 from django.urls import reverse
-from django_ratelimit.decorators import ratelimit
 from django.utils import timezone
-from datetime import timedelta
-import json
+from django.views.decorators.http import require_POST
+from django_ratelimit.decorators import ratelimit
+
+from .models import GuestRegistration, AuditLog, Room, AdminSettings
 
 def log_action(request, action, details):
     ip = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -49,16 +53,12 @@ def intro(request):
     return render(request, 'management/intro.html')
 
 def guest_form_page(request):
-    from .models import AdminSettings
     settings_obj = AdminSettings.load()
 
-    # 1. Maintenance Mode Check
     if settings_obj.maintenance_mode:
         return render(request, 'management/maintenance.html')
 
-    # 2. Access Code Check
     if settings_obj.form_access_code:
-        # Check if user has already entered the code
         if not request.session.get('form_authorized'):
             if request.method == 'POST':
                 entered_code = request.POST.get('access_code')
@@ -86,16 +86,12 @@ def guest_form_page(request):
 
 @require_POST
 def submit_guest_form(request):
-    # Ensure maintenance mode is respected even on direct POST
-    from .models import AdminSettings
     if AdminSettings.load().maintenance_mode:
         return HttpResponse("System is under maintenance.", status=503)
 
     data = request.POST
     
-    # Honeypot Check (Anti-Bot)
     if data.get('nickname'):
-        # Log this event if logging was set up
         return HttpResponse("Spam detected", status=400)
 
     required_fields = ['last_name', 'first_name', 'address', 'phone', 'birth_date', 'gender']
@@ -111,6 +107,7 @@ def submit_guest_form(request):
         address=data.get('address').upper(),
         phone=data.get('phone'),
         email=data.get('email'),
+        car_plate=data.get('car_plate', '').upper() if data.get('car_plate') else None,
         birth_date=data.get('birth_date') or None,
         gender=data.get('gender'),
         security_deposit=1000,
@@ -134,11 +131,10 @@ def admin_login(request):
     if was_limited:
          return render(request, 'management/admin_login.html', {'error': 'Too many failed attempts. Please try again in 10 minutes.'})
 
-    from .models import AdminSettings
     if request.method == 'POST':
         pin = request.POST.get('pin')
-        settings = AdminSettings.load()
-        if pin == settings.pin_code: 
+        settings_obj = AdminSettings.load()
+        if pin == settings_obj.pin_code: 
             request.session['is_manager'] = True
             log_action(request, 'LOGIN', 'Admin logged in successfully')
             return redirect('dashboard')
@@ -152,101 +148,195 @@ def dashboard(request):
         return redirect('admin_login')
     
     cleanup_expired_registrations()
-    guests = GuestRegistration.objects.all().order_by('-created_at')
-    audit_logs = AuditLog.objects.all()[:5]
+    
+    guests_query = GuestRegistration.objects.all().order_by('-created_at')
+    
+    query = request.GET.get('q')
+    if query:
+        guests_query = guests_query.filter(
+            Q(first_name__icontains=query) | 
+            Q(last_name__icontains=query) | 
+            Q(room_number__icontains=query) |
+            Q(booking_id__icontains=query)
+        )
+
+    today = timezone.now().date()
+    
+    stats = {
+        'total': GuestRegistration.objects.count(),
+        'active': GuestRegistration.objects.filter(status='PRINTED', check_out_date__gte=today).count(),
+        'pending': GuestRegistration.objects.filter(status='PENDING').count(),
+        'today_checkins': GuestRegistration.objects.filter(check_in_date=today).count(),
+    }
+
+    grouped_guests = {}
+    for guest in guests_query:
+        month_year = guest.created_at.strftime('%B %Y')
+        if month_year not in grouped_guests:
+            grouped_guests[month_year] = []
+        grouped_guests[month_year].append(guest)
+        
+    audit_logs = AuditLog.objects.all().order_by('-timestamp')[:8]
+    
+    context = {
+        'grouped_guests': grouped_guests, 
+        'audit_logs': audit_logs,
+        'search_query': query,
+        'stats': stats
+    }
     
     if request.headers.get('HX-Request'):
-        return render(request, 'management/partials/guest_list.html', {'guests': guests})
+        return render(request, 'management/partials/guest_list.html', context)
         
-    return render(request, 'management/dashboard.html', {'guests': guests, 'audit_logs': audit_logs})
-
-from django.db.models import Sum, Count, F, Q
-from django.db.models.functions import TruncMonth, TruncDate, TruncWeek, TruncYear
+    return render(request, 'management/dashboard.html', context)
 
 def update_guest(request, guest_id):
     if not request.session.get('is_manager'):
         return redirect('admin_login')
 
     guest = get_object_or_404(GuestRegistration, id=guest_id)
+    old_room_number = guest.room_number
+    error = None
 
     if request.method == 'POST':
-        guest.first_name = request.POST.get('first_name').upper()
-        guest.last_name = request.POST.get('last_name').upper()
-        guest.address = request.POST.get('address').upper()
+        guest.source = request.POST.get('source', 'WALKIN')
+        guest.first_name = request.POST.get('first_name', '').upper()
+        guest.last_name = request.POST.get('last_name', '').upper()
+        guest.address = request.POST.get('address', '').upper()
         guest.phone = request.POST.get('phone')
         guest.email = request.POST.get('email')
+        guest.car_plate = request.POST.get('car_plate', '').upper() if request.POST.get('car_plate') else None
+        guest.birth_date = request.POST.get('birth_date') or None
+        guest.gender = request.POST.get('gender')
 
-        guest.pax = request.POST.get('pax')
-        guest.nights = request.POST.get('nights')
+        guest.pax = request.POST.get('pax', 1)
+        guest.nights = request.POST.get('nights', 1)
+        guest.stay_duration = request.POST.get('stay_duration', '')
         
-        # Room Data
-        guest.room_number = request.POST.get('room_number')
+        new_room_number = request.POST.get('room_number', '')
+        guest.room_number = new_room_number
         room_rate_raw = request.POST.get('room_rate', '0').replace(',', '')
         guest.room_rate = float(room_rate_raw or 0)
         
-        # Financials
-        guest.mode_of_payment = request.POST.get('mode_of_payment')
+        guest.mode_of_payment = request.POST.get('mode_of_payment', 'CASH')
         security_deposit_raw = request.POST.get('security_deposit', '0').replace(',', '')
         guest.security_deposit = float(security_deposit_raw or 0)
         
-        # Requests processing
         req_items = request.POST.getlist('request_item[]')
         req_prices = request.POST.getlist('request_price[]')
-        requests = []
+        requests_list = []
         requests_total = 0
         for i, item in enumerate(req_items):
             if item.strip():
                 try:
-                    price = float(req_prices[i]) if i < len(req_prices) and req_prices[i] else 0
+                    price_str = req_prices[i].replace(',', '') if i < len(req_prices) and req_prices[i] else '0'
+                    price = float(price_str)
                 except ValueError:
                     price = 0
-                requests.append({'item': item.strip(), 'price': price})
+                requests_list.append({'item': item.strip(), 'price': price})
                 requests_total += price
         
-        guest.additional_requests = json.dumps(requests)
-        
-        # Calculate Total Amount
+        guest.additional_requests = json.dumps(requests_list)
         room_total = guest.room_rate * int(guest.nights or 1)
         guest.total_amount = room_total + requests_total
+        
+        cid = request.POST.get('check_in_date')
+        if cid:
+            try:
+                guest.check_in_date = datetime.strptime(cid, '%Y-%m-%d').date()
+            except ValueError:
+                guest.check_in_date = None
+        else:
+            guest.check_in_date = None
 
-        guest.check_in_date = request.POST.get('check_in_date') or None
         guest.check_in_time = request.POST.get('check_in_time') or None
-        guest.check_out_date = request.POST.get('check_out_date') or None
-        guest.check_out_time = request.POST.get('check_out_time') or None
+        
+        if guest.check_in_date:
+            try:
+                nights = int(guest.nights or 0)
+                guest.check_out_date = guest.check_in_date + timedelta(days=nights)
+            except (ValueError, TypeError):
+                guest.check_out_date = guest.check_in_date
+        
         guest.notes = request.POST.get('notes', '')
         
-        guest.save()
-
-        log_action(request, 'UPDATE_GUEST', f"Updated info for {guest.first_name} {guest.last_name}")
-
-        if request.POST.get('action') == 'save_and_print':
-            guest.status = 'PRINTED'
-            guest.save()
-            return redirect('generate_guest_pdf', guest_id=guest.id)
+        required_fields = ['first_name', 'last_name', 'address', 'phone', 'birth_date', 'gender']
+        missing = [f for f in required_fields if not getattr(guest, f)]
         
-        return redirect('dashboard')
+        if missing:
+            error = "Please fill in all required fields: " + ", ".join([f.replace('_', ' ').title() for f in missing])
+        else:
+            if isinstance(guest.birth_date, str):
+                try:
+                    bdate = datetime.strptime(guest.birth_date, '%Y-%m-%d').date()
+                    guest.birth_date = bdate
+                except:
+                    error = "Invalid birth date format."
+            
+            if not error and guest.birth_date:
+                today = timezone.now().date()
+                age = today.year - guest.birth_date.year - ((today.month, today.day) < (guest.birth_date.month, guest.birth_date.day))
+                if age < 18:
+                    error = f"Guest must be at least 18 years old. (Current Age: {age})"
 
-    # Parse requests for template if needed
+        if not error:
+            action = request.POST.get('action')
+            is_activating = action == 'save_and_print'
+            is_checking_out = action == 'checkout'
+            
+            if is_activating:
+                guest.status = 'PRINTED'
+            elif is_checking_out:
+                guest.status = 'CHECKED_OUT'
+            
+            guest.save()
+
+            if old_room_number and old_room_number != new_room_number:
+                Room.objects.filter(number=old_room_number).update(status='AVAILABLE')
+            
+            if new_room_number:
+                if guest.status == 'PRINTED':
+                    today = timezone.now().date()
+                    if guest.check_in_date and guest.check_out_date and guest.check_in_date <= today and guest.check_out_date > today:
+                        Room.objects.filter(number=new_room_number).update(status='OCCUPIED')
+                    else:
+                        Room.objects.filter(number=new_room_number).update(status='AVAILABLE')
+                elif guest.status == 'CHECKED_OUT':
+                    Room.objects.filter(number=new_room_number).update(status='AVAILABLE')
+
+            log_action(request, 'UPDATE_GUEST', f"Updated info for {guest.first_name} {guest.last_name} ({guest.status})")
+
+            if is_activating:
+                return redirect('generate_guest_pdf', guest_id=guest.id)
+            
+            return redirect('dashboard')
+
     try:
         current_requests = json.loads(guest.additional_requests)
     except:
         current_requests = []
 
-    # POLICY: Auto-fill dates if missing
     now = timezone.now()
     if not guest.check_in_date:
         guest.check_in_date = now.date()
     if not guest.check_in_time:
-        guest.check_in_time = "14:00" # Policy 2PM
+        guest.check_in_time = "14:00"
     if not guest.check_out_date:
         guest.check_out_date = (now + timedelta(days=1)).date()
     if not guest.check_out_time:
-        guest.check_out_time = "12:00" # Policy 12NN
+        guest.check_out_time = "12:00"
 
-    # Fetch Rooms from Database for Dropdown
-    # Filter out MAINTENANCE or OCCUPIED rooms unless it is the guest's current room
+    today = timezone.now().date()
+    occupied_today_rooms = GuestRegistration.objects.filter(
+        status='PRINTED',
+        check_in_date__lte=today,
+        check_out_date__gt=today
+    ).exclude(id=guest.id).values_list('room_number', flat=True)
+
     db_rooms = Room.objects.filter(
-        Q(status='AVAILABLE') | Q(number=guest.room_number)
+        ~Q(status='MAINTENANCE')
+    ).exclude(
+        Q(number__in=occupied_today_rooms) & ~Q(number=guest.room_number)
     ).order_by('floor', 'number')
     
     room_data = {}
@@ -256,58 +346,81 @@ def update_guest(request, guest_id):
         room_data[room.floor].append({
             'id': room.number,
             'price': room.price,
+            'price_6hr': room.price_6hr,
+            'price_10hr': room.price_10hr,
             'capacity': room.capacity
         })
+
+    conflict_warning = None
+    if guest.room_number and guest.check_in_date and guest.check_out_date:
+        overlapping_guests = GuestRegistration.objects.filter(
+            room_number=guest.room_number,
+            check_in_date__lt=guest.check_out_date,
+            check_out_date__gt=guest.check_in_date
+        ).exclude(id=guest.id).exclude(status='CHECKED_OUT')
+
+        if overlapping_guests.exists():
+            conflicts = [f"{g.first_name} {g.last_name} ({g.check_in_date} to {g.check_out_date})" for g in overlapping_guests]
+            conflict_warning = f"Warning: Room {guest.room_number} has overlapping booking(s): {', '.join(conflicts)}"
 
     return render(request, 'management/update_guest.html', {
         'guest': guest, 
         'room_data': room_data,
-        'current_requests': current_requests
+        'current_requests': current_requests,
+        'error': error,
+        'conflict_warning': conflict_warning
     })
+
+def delete_guest(request, guest_id):
+    if not request.session.get('is_manager'):
+        return redirect('admin_login')
+    
+    guest = get_object_or_404(GuestRegistration, id=guest_id)
+    room_number = guest.room_number
+    guest_name = f"{guest.first_name} {guest.last_name}"
+    
+    if room_number:
+        Room.objects.filter(number=room_number).update(status='AVAILABLE')
+    
+    guest.delete()
+    log_action(request, 'DELETE_GUEST', f"Deleted registration for {guest_name}")
+    return redirect('dashboard')
 
 def analytics_dashboard(request):
     if not request.session.get('is_manager'):
         return redirect('admin_login')
         
-    # Summary Stats
     total_revenue = GuestRegistration.objects.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
     total_guests = GuestRegistration.objects.count()
     
-    # Guests of the Day
     today = timezone.now().date()
-    guests_today = GuestRegistration.objects.filter(created_at__date=today).count()
+    guests_today = GuestRegistration.objects.filter(check_in_date=today).count()
     
-    # Source Breakdown
     source_query = GuestRegistration.objects.values('source').annotate(count=Count('id'))
     source_data = list(source_query)
     
-    # Chart Data Filtering
     filter_type = request.GET.get('filter', 'daily')
     chart_data = []
     
     if filter_type == 'weekly':
-        # Last 52 weeks
         start_date = timezone.now() - timedelta(weeks=52)
         chart_query = GuestRegistration.objects.filter(created_at__gte=start_date).annotate(
             date=TruncWeek('created_at')
         ).values('date').annotate(revenue=Sum('total_amount')).order_by('date')
         
     elif filter_type == 'monthly':
-        # Last 12 months
         start_date = timezone.now() - timedelta(days=365)
         chart_query = GuestRegistration.objects.filter(created_at__gte=start_date).annotate(
             date=TruncMonth('created_at')
         ).values('date').annotate(revenue=Sum('total_amount')).order_by('date')
         
     elif filter_type == 'yearly':
-        # Last 5 years
         start_date = timezone.now() - timedelta(days=365*5)
         chart_query = GuestRegistration.objects.filter(created_at__gte=start_date).annotate(
             date=TruncYear('created_at')
         ).values('date').annotate(revenue=Sum('total_amount')).order_by('date')
         
-    else: # daily (default)
-        # Last 30 days only for readability, or use scroll
+    else:
         start_date = timezone.now() - timedelta(days=30)
         chart_query = GuestRegistration.objects.filter(created_at__gte=start_date).annotate(
             date=TruncDate('created_at')
@@ -315,7 +428,6 @@ def analytics_dashboard(request):
     
     chart_data = list(chart_query)
     
-    # Calculate Max Revenue for Chart Scaling
     max_revenue = 0
     if chart_data:
         max_revenue = max((d['revenue'] or 0) for d in chart_data)
@@ -325,7 +437,7 @@ def analytics_dashboard(request):
         'total_guests': total_guests,
         'guests_today': guests_today,
         'source_data': source_data,
-        'daily_revenue': chart_data, # Passed as daily_revenue for compatibility with template
+        'daily_revenue': chart_data,
         'max_revenue': max_revenue,
         'current_filter': filter_type,
     })
@@ -334,11 +446,9 @@ def print_analytics(request):
     if not request.session.get('is_manager'):
         return redirect('admin_login')
     
-    # Yearly Summary Stats
     total_revenue = GuestRegistration.objects.aggregate(Sum('total_amount'))['total_amount__sum'] or 0
     total_guests = GuestRegistration.objects.count()
     
-    # Monthly Breakdown (Last 12 Months)
     last_year = timezone.now() - timedelta(days=365)
     monthly_query = GuestRegistration.objects.filter(
         created_at__gte=last_year
@@ -369,7 +479,6 @@ def settings_page(request):
     if not request.session.get('is_manager'):
         return redirect('admin_login')
         
-    from .models import AdminSettings
     settings_obj = AdminSettings.load()
     error = None
     success = None
@@ -411,17 +520,12 @@ def room_rack(request):
     if not request.session.get('is_manager'):
         return redirect('admin_login')
     
-    # Fetch all guests
-    # In a real scenario, you might filter out 'checked-out' guests if you had that status.
-    # For now, we map the latest registration for each room.
-    guests = GuestRegistration.objects.all().order_by('created_at')
+    active_guests = GuestRegistration.objects.filter(
+        status__in=['PENDING', 'PRINTED']
+    ).order_by('created_at')
     
-    room_map = {}
-    for guest in guests:
-        if guest.room_number:
-            room_map[guest.room_number] = guest
+    room_map = {guest.room_number: guest for guest in active_guests if guest.room_number}
 
-    # Fetch Rooms from DB
     db_rooms = Room.objects.all().order_by('floor', 'number')
     rack_data = {}
     
@@ -430,26 +534,38 @@ def room_rack(request):
             rack_data[room.floor] = []
             
         r_id = room.number
-        status = room.status # AVAILABLE, OCCUPIED, MAINTENANCE
+        db_status = room.status
+        display_status = db_status
         
         guest = room_map.get(r_id)
         guest_name = ''
         guest_id = ''
         
-        if status == 'OCCUPIED' and guest:
-             guest_name = f"{guest.first_name} {guest.last_name}"
-             guest_id = guest.id
-        elif guest and guest.status == 'PENDING':
-             status = 'PENDING'
-             guest_name = f"{guest.first_name} {guest.last_name}"
-             guest_id = guest.id
+        if guest:
+            guest_name = f"{guest.first_name} {guest.last_name}"
+            guest_id = guest.id
+            
+            if guest.status == 'PENDING':
+                display_status = 'PENDING'
+            elif guest.status == 'PRINTED':
+                display_status = 'OCCUPIED'
+                today = timezone.now().date()
+                if guest.check_in_date <= today and guest.check_out_date > today:
+                    if db_status == 'AVAILABLE':
+                        room.status = 'OCCUPIED'
+                        room.save()
+                else:
+                    if db_status == 'OCCUPIED':
+                        room.status = 'AVAILABLE'
+                        room.save()
             
         rack_data[room.floor].append({
             'id': r_id,
             'price': room.price,
-            'status': status,
+            'status': display_status,
             'guest_name': guest_name,
-            'guest_id': guest_id
+            'guest_id': guest_id,
+            'is_advance': (guest.check_in_date > timezone.now().date()) if guest and guest.check_in_date else False
         })
 
     return render(request, 'management/room_rack.html', {
@@ -460,8 +576,6 @@ def room_management(request):
     if not request.session.get('is_manager'):
         return redirect('admin_login')
     
-    from .models import Room
-
     if request.method == 'POST':
         room_id = request.POST.get('room_id')
         price_raw = request.POST.get('price', '0').replace(',', '')
@@ -472,6 +586,8 @@ def room_management(request):
         try:
             room = Room.objects.get(number=room_id)
             room.price = price
+            room.price_6hr = float(request.POST.get('price_6hr', '0').replace(',', '') or 0)
+            room.price_10hr = float(request.POST.get('price_10hr', '0').replace(',', '') or 0)
             room.capacity = capacity
             room.status = status
             room.save()
@@ -481,27 +597,144 @@ def room_management(request):
         
         return redirect('room_management')
 
-    # Group rooms by floor
     rooms = Room.objects.all().order_by('floor', 'number')
     grouped_rooms = {}
     for room in rooms:
-        if room.floor not in grouped_rooms:
-            grouped_rooms[room.floor] = []
-        grouped_rooms[room.floor].append(room)
+        floor_name = room.floor
+        if floor_name not in grouped_rooms:
+            grouped_rooms[floor_name] = []
+        grouped_rooms[floor_name].append(room)
+    
+    room_stats = {
+        'total': Room.objects.count(),
+        'available': Room.objects.filter(status='AVAILABLE').count(),
+        'occupied': Room.objects.filter(status='OCCUPIED').count(),
+        'maintenance': Room.objects.filter(status='MAINTENANCE').count(),
+    }
 
     return render(request, 'management/manage_rooms.html', {
-        'grouped_rooms': grouped_rooms
+        'grouped_rooms': grouped_rooms,
+        'room_stats': room_stats
     })
+
+def calendar_view(request):
+    if not request.session.get('is_manager'):
+        return redirect('admin_login')
+    
+    today = timezone.now().date()
+    year = int(request.GET.get('year', today.year))
+    month = int(request.GET.get('month', today.month))
+    
+    num_days = py_calendar.monthrange(year, month)[1]
+    first_day = date(year, month, 1)
+    last_day = date(year, month, num_days)
+    days_range = [date(year, month, d) for d in range(1, num_days + 1)]
+    
+    rooms = Room.objects.all().order_by('floor', 'number')
+    
+    guests = GuestRegistration.objects.filter(
+        check_in_date__lte=last_day,
+        check_out_date__gte=first_day
+    ).exclude(status='CHECKED_OUT').exclude(room_number='')
+
+    booking_map = {}
+    for guest in guests:
+        if guest.room_number not in booking_map:
+            booking_map[guest.room_number] = []
+        
+        if guest.check_in_date == guest.check_out_date:
+            last_night = guest.check_in_date
+        else:
+            last_night = guest.check_out_date - timedelta(days=1)
+        
+        guest.start_date = guest.check_in_date
+        guest.end_night = last_night
+        booking_map[guest.room_number].append(guest)
+
+    for room in rooms:
+        room.is_occupied_today = False
+        if room.number in booking_map:
+            for g in booking_map[room.number]:
+                if g.check_in_date <= today and today <= g.end_night:
+                    room.is_occupied_today = True
+                    break
+        
+    context = {
+        'days_range': days_range,
+        'rooms': rooms,
+        'current_month': first_day,
+        'today': today,
+        'booking_map': booking_map,
+        'prev_month': (first_day - timedelta(days=1)),
+        'next_month': (last_day + timedelta(days=1)),
+    }
+    
+    return render(request, 'management/calendar.html', context)
+
+def print_timeline(request):
+    if not request.session.get('is_manager'):
+        return redirect('admin_login')
+    
+    year = int(request.GET.get('year', timezone.now().year))
+    month = int(request.GET.get('month', timezone.now().month))
+    
+    first_day = date(year, month, 1)
+    num_days = py_calendar.monthrange(year, month)[1]
+    last_day = date(year, month, num_days)
+    days_range = [date(year, month, d) for d in range(1, num_days + 1)]
+    
+    rooms = Room.objects.all().order_by('floor', 'number')
+    guests = GuestRegistration.objects.filter(
+        check_in_date__lte=last_day,
+        check_out_date__gte=first_day
+    ).exclude(status='CHECKED_OUT').exclude(room_number='')
+
+    booking_map = {}
+    for guest in guests:
+        if guest.room_number not in booking_map:
+            booking_map[guest.room_number] = []
+        booking_map[guest.room_number].append(guest)
+
+    html_string = render_to_string('pdf/timeline_report.html', {
+        'days_range': days_range,
+        'rooms': rooms,
+        'booking_map': booking_map,
+        'current_month': first_day,
+        'base_dir': settings.BASE_DIR,
+        'generated_at': timezone.now()
+    })
+    
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'inline; filename="timeline_{year}_{month}.pdf"'
+    weasyprint.HTML(string=html_string, base_url=str(settings.BASE_DIR)).write_pdf(response)
+    
+    return response
+
+def new_booking(request):
+    if not request.session.get('is_manager'):
+        return redirect('admin_login')
+        
+    pre_room = request.GET.get('room', '')
+    pre_date = request.GET.get('date', None)
+    
+    guest = GuestRegistration.objects.create(
+        first_name='NEW',
+        last_name='GUEST',
+        status='PENDING',
+        room_number=pre_room,
+        check_in_date=pre_date,
+        pax=1,
+        nights=1
+    )
+    return redirect('update_guest', guest_id=guest.id)
 
 def generate_guest_pdf(request, guest_id):
     if not request.session.get('is_manager'):
         return redirect('admin_login')
 
     guest = get_object_or_404(GuestRegistration, id=guest_id)
-    
     log_action(request, 'PRINT_PDF', f"Generated PDF for {guest.first_name} {guest.last_name}")
     
-    # Calculate Financials
     try:
         requests_list = json.loads(guest.additional_requests)
     except:
@@ -510,10 +743,10 @@ def generate_guest_pdf(request, guest_id):
     room_rate = float(guest.room_rate or 0)
     nights = int(guest.nights or 1)
     room_total = room_rate * nights
-    
     requests_total = sum(float(r.get('price', 0)) for r in requests_list)
-    
     grand_total = room_total + requests_total
+
+    settings_obj = AdminSettings.load()
 
     html_string = render_to_string('pdf/guest_registration.html', {
         'guest': guest,
@@ -522,7 +755,8 @@ def generate_guest_pdf(request, guest_id):
         'room_total': room_total,
         'requests_total': requests_total,
         'grand_total': grand_total,
-        'now': timezone.now()
+        'now': timezone.now(),
+        'policy_text': settings_obj.policy_text
     })
     
     response = HttpResponse(content_type='application/pdf')

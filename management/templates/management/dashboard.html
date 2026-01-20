@@ -1,107 +1,179 @@
 {% extends 'management/base.html' %}
+{% load humanize %}
 
-{% block title %}Management Dashboard{% endblock %}
+{% block title %}Admin Dashboard | Kegama Residences{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-100 pb-20">
+<div class="min-h-screen bg-gray-50 pb-20">
     
     <!-- Navbar -->
-    <nav class="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-20 flex justify-between items-center shadow-sm">
-        <span class="font-bold text-lg tracking-tight text-gray-900"><span class="text-orange-600">KEGAMA</span> Admin</span>
-        <div class="text-right">
-            <div id="live-date" class="text-xs font-semibold text-orange-600 uppercase tracking-wider">-- --- ----</div>
-            <div id="live-clock" class="text-lg font-bold text-gray-800 leading-tight">--:--:--</div>
-            <div class="text-[10px] uppercase text-gray-400 font-bold tracking-tighter">Live Monitor</div>
+    <nav class="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-20 flex justify-between items-center backdrop-blur-md bg-white/90">
+        <div class="flex items-center gap-4">
+            <span class="font-black text-xl tracking-tighter text-gray-900 uppercase">Kegama <span class="text-orange-600">Admin</span></span>
+            
+            <button onclick="toggleDashboardGuide()" class="ml-2 text-xs font-bold text-orange-600 border border-orange-200 bg-orange-50 hover:bg-orange-100 px-2 py-1 rounded-md flex items-center gap-1 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Guide
+            </button>
+
+            <div class="hidden md:flex items-center gap-2 ml-6 border-l pl-6 border-gray-100">
+                <a href="{% url 'calendar_view' %}" class="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-orange-600 flex items-center gap-2 transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    Calendar
+                </a>
+                <a href="{% url 'new_booking' %}" class="ml-4 text-[10px] font-black uppercase tracking-widest text-orange-600 hover:text-orange-700 flex items-center gap-2 transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                    New Check-in
+                </a>
+            </div>
+        </div>
+        <div class="flex items-center gap-4" x-data="{ showTime: true }">
+            <div class="text-right flex flex-col items-end" x-show="showTime" x-transition>
+                <div id="live-date" class="text-[9px] font-black text-orange-600 uppercase tracking-widest leading-tight">-- --- ----</div>
+                <div id="live-clock" class="text-lg font-black text-gray-800 leading-none">--:--:--</div>
+            </div>
+            <button @click="showTime = !showTime" class="p-2 text-gray-400 hover:text-orange-600 transition-colors bg-gray-50 rounded-xl border border-gray-100 shadow-sm">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path x-show="!showTime" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    <path x-show="showTime" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18"></path>
+                </svg>
+            </button>
         </div>
     </nav>
 
-    <script>
-        function updateClock() {
-            const now = new Date();
-            // Date format: Dec 30, 2025
-            document.getElementById('live-date').innerText = now.toLocaleDateString([], { month: 'short', day: '2-digit', year: 'numeric' });
-            // Time format: 12:00:00 PM
-            document.getElementById('live-clock').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-        }
-        setInterval(updateClock, 1000);
-        updateClock();
-    </script>
+    <div class="p-6 md:p-8 lg:p-12 max-w-6xl mx-auto space-y-10">
+        
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+            <!-- Total Records -->
+            <div class="bg-white p-4 rounded-[1.5rem] border border-gray-100 shadow-sm relative overflow-hidden h-24 flex flex-col justify-center">
+                <div class="absolute -bottom-2 -right-2 text-blue-500/10 transform rotate-12">
+                    <svg class="w-20 h-20" fill="currentColor" viewBox="0 0 24 24"><path d="M4 7v10c0 1.1.9 2 2 2h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2zm2 0h12v10H6V7zm2 2h8v2H8V9zm0 4h5v2H8v-2z"></path></svg>
+                </div>
+                <div class="relative z-10">
+                    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 block mb-0.5">Records</span>
+                    <div class="text-2xl font-black text-gray-900 leading-none">{{ stats.total }}</div>
+                </div>
+            </div>
 
-    <div class="p-4 max-w-4xl mx-auto">
-        <div class="flex justify-between items-center mb-4">
-            <h1 class="text-xl font-bold text-gray-800">Guest Registrations</h1>
-            <div class="flex gap-2">
-                <a href="{% url 'room_rack' %}" class="flex items-center gap-2 bg-white border border-gray-200 hover:border-blue-500 hover:text-blue-600 text-gray-600 px-3 py-1.5 rounded-lg text-sm font-bold transition-all shadow-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
-                    Status
+            <!-- Active Guests -->
+            <div class="bg-white p-4 rounded-[1.5rem] border border-gray-100 shadow-sm relative overflow-hidden h-24 flex flex-col justify-center">
+                <div class="absolute -bottom-2 -right-2 text-green-500/10 transform rotate-12">
+                    <svg class="w-20 h-20" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path></svg>
+                </div>
+                <div class="relative z-10">
+                    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 block mb-0.5">Active</span>
+                    <div class="text-2xl font-black text-gray-900 leading-none">{{ stats.active }}</div>
+                </div>
+            </div>
+
+            <!-- Pending -->
+            <div class="bg-white p-4 rounded-[1.5rem] border border-gray-100 shadow-sm relative overflow-hidden h-24 flex flex-col justify-center">
+                <div class="absolute -bottom-2 -right-2 text-yellow-500/10 transform rotate-12">
+                    <svg class="w-20 h-20" fill="currentColor" viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67V7z"></path></svg>
+                </div>
+                <div class="relative z-10">
+                    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 block mb-0.5">Pending</span>
+                    <div class="text-2xl font-black text-gray-900 leading-none">{{ stats.pending }}</div>
+                </div>
+            </div>
+
+            <!-- Arrivals Today -->
+            <div class="bg-white p-4 rounded-[1.5rem] border border-gray-100 shadow-sm relative overflow-hidden h-24 flex flex-col justify-center">
+                <div class="absolute -bottom-2 -right-2 text-orange-500/10 transform rotate-12">
+                    <svg class="w-20 h-20" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19a2 2 0 002 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z"></path></svg>
+                </div>
+                <div class="relative z-10">
+                    <span class="text-[9px] font-black uppercase tracking-[0.2em] text-gray-400 block mb-0.5">Arrivals</span>
+                    <div class="text-2xl font-black text-gray-900 leading-none">{{ stats.today_checkins }}</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="flex flex-col md:flex-row justify-between items-center gap-6 bg-white p-5 rounded-[2rem] shadow-sm border border-gray-100">
+            <!-- Search -->
+            <div class="relative w-full md:w-96 group">
+                <div class="absolute inset-y-0 left-0 flex items-center pl-5 pointer-events-none">
+                    <svg class="w-4 h-4 text-gray-400 group-focus-within:text-orange-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m19 19-4-4m0-7A7 7 0 1 1 1 8a7 7 0 0 1 14 0Z"></path></svg>
+                </div>
+                <input type="text" name="q" 
+                       class="block w-full py-3.5 pl-12 pr-6 text-sm text-gray-900 border border-gray-200 bg-gray-50 rounded-2xl focus:ring-2 focus:ring-orange-500 transition-all font-bold placeholder-gray-300" 
+                       placeholder="Search guest, room or ID..." 
+                       hx-get="{% url 'dashboard' %}" 
+                       hx-trigger="keyup changed delay:500ms, search" 
+                       hx-target="#guest-list" 
+                       hx-indicator="#search-spinner">
+                <div id="search-spinner" class="htmx-indicator absolute right-5 top-4">
+                    <svg class="animate-spin h-4 w-4 text-orange-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="flex gap-3 w-full md:w-auto">
+                <a href="{% url 'room_rack' %}" class="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-gray-200 hover:border-orange-500 hover:text-orange-600 text-gray-700 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm">
+                    <svg class="w-4 h-4 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    Rack
                 </a>
-                <a href="{% url 'room_management' %}" class="flex items-center gap-2 bg-white border border-gray-200 hover:border-green-500 hover:text-green-600 text-gray-600 px-3 py-1.5 rounded-lg text-sm font-bold transition-all shadow-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                    Edit Rooms
+                <a href="{% url 'room_management' %}" class="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-gray-200 hover:border-green-500 hover:text-green-600 text-gray-700 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm">
+                    <svg class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    Rooms
                 </a>
-                <a href="{% url 'analytics_dashboard' %}" class="flex items-center gap-2 bg-white border border-gray-200 hover:border-orange-500 hover:text-orange-600 text-gray-600 px-3 py-1.5 rounded-lg text-sm font-bold transition-all shadow-sm">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                    Analytics
+                <a href="{% url 'analytics_dashboard' %}" class="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-gray-200 hover:border-blue-500 hover:text-blue-600 text-gray-700 px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-sm">
+                    <svg class="w-4 h-4 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    Stats
                 </a>
-                <a href="{% url 'settings_page' %}" class="flex items-center gap-2 bg-white border border-gray-200 hover:border-gray-500 hover:text-gray-800 text-gray-600 px-3 py-1.5 rounded-lg text-sm font-bold transition-all shadow-sm" title="Security Settings">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <a href="{% url 'settings_page' %}" class="flex items-center justify-center bg-gray-50 text-gray-400 hover:text-orange-600 w-12 h-12 rounded-2xl transition-all border border-gray-100 shadow-sm" title="Security Settings">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                 </a>
             </div>
         </div>
 
-        <div id="guest-list" 
-             hx-get="{% url 'dashboard' %}" 
-             hx-trigger="every 5s" 
-             hx-swap="innerHTML"
-             class="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+        <div id="guest-list" class="bg-transparent space-y-4">
             {% include 'management/partials/guest_list.html' %}
         </div>
 
-        <!-- Developer Options Toggle -->
-        <div class="flex justify-center mt-12 mb-4">
+        <!-- Developer Toggle Discreet -->
+        <div class="flex justify-center pt-12">
             <button onclick="document.getElementById('audit-log-section').classList.toggle('hidden');" 
-                    class="p-2 text-gray-400 bg-gray-200 rounded-full hover:bg-gray-800 hover:text-white transition-all duration-300 opacity-40 hover:opacity-100 shadow-sm" 
-                    title="Developer Options">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    class="text-[9px] font-black text-gray-300 uppercase tracking-[0.4em] hover:text-black transition-all">
+                Audit Logs
             </button>
         </div>
 
         <!-- Security Audit Log (Hidden by default) -->
-        <div id="audit-log-section" class="hidden bg-white border border-gray-100 rounded-2xl p-6 shadow-sm transition-all animate-fade-in">
-            <div class="flex items-center gap-3 mb-4">
-                <div class="bg-gray-100 p-2 rounded-lg">
-                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                </div>
-                <h3 class="font-bold text-gray-900">Security Audit Log</h3>
+        <div id="audit-log-section" class="hidden bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm transition-all animate-fade-in">
+            <div class="flex items-center gap-3 mb-8">
+                <h3 class="font-black text-gray-900 uppercase tracking-widest text-xs">Security Audit Log</h3>
             </div>
             
             <div class="overflow-x-auto">
-                <table class="w-full text-sm text-left text-gray-500">
-                    <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                <table class="w-full text-xs text-left text-gray-500 border-collapse">
+                    <thead class="text-[9px] text-gray-400 uppercase tracking-widest bg-gray-50/50">
                         <tr>
-                            <th scope="col" class="px-4 py-3">Time</th>
-                            <th scope="col" class="px-4 py-3">Action</th>
-                            <th scope="col" class="px-4 py-3">Details</th>
-                            <th scope="col" class="px-4 py-3">IP</th>
+                            <th scope="col" class="px-6 py-4">Time</th>
+                            <th scope="col" class="px-6 py-4">Action</th>
+                            <th scope="col" class="px-6 py-4">Details</th>
+                            <th scope="col" class="px-4 py-3 text-right">IP</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody class="divide-y divide-gray-50">
                         {% for log in audit_logs %}
-                        <tr class="bg-white border-b hover:bg-gray-50">
-                            <td class="px-4 py-3 whitespace-nowrap">{{ log.timestamp|date:"M d, H:i" }}</td>
-                            <td class="px-4 py-3 font-semibold 
+                        <tr class="bg-white hover:bg-gray-50 transition-colors">
+                            <td class="px-6 py-4 whitespace-nowrap font-bold text-gray-400">{{ log.timestamp|date:"M d, H:i" }}</td>
+                            <td class="px-6 py-4 font-black uppercase tracking-tight
                                 {% if log.action == 'LOGIN' %}text-green-600
                                 {% elif log.action == 'PRINT_PDF' %}text-purple-600
                                 {% elif log.action == 'UPDATE_GUEST' %}text-blue-600
                                 {% else %}text-gray-600{% endif %}">
                                 {{ log.get_action_display }}
                             </td>
-                            <td class="px-4 py-3">{{ log.details }}</td>
-                            <td class="px-4 py-3 font-mono text-xs">{{ log.ip_address }}</td>
+                            <td class="px-6 py-4 font-bold text-gray-700">{{ log.details }}</td>
+                            <td class="px-6 py-4 font-mono text-[10px] text-gray-300 text-right">{{ log.ip_address }}</td>
                         </tr>
                         {% empty %}
                         <tr>
-                            <td colspan="4" class="px-4 py-3 text-center text-gray-400">No recent activity</td>
+                            <td colspan="4" class="px-6 py-12 text-center text-gray-300 font-bold uppercase tracking-widest">No recent activity</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -110,4 +182,16 @@
         </div>
     </div>
 </div>
+
+<script>
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('live-date').innerText = now.toLocaleDateString([], { month: 'short', day: '2-digit', year: 'numeric' });
+        document.getElementById('live-clock').innerText = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+</script>
+
+{% include 'management/guide_dashboard.html' %}
 {% endblock %}

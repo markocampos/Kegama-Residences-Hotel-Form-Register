@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import GuestRegistration, AdminSettings
+from .models import GuestRegistration, AdminSettings, Room, Amenity
 
 @admin.register(GuestRegistration)
 class GuestRegistrationAdmin(admin.ModelAdmin):
@@ -16,3 +16,15 @@ class AdminSettingsAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+@admin.register(Room)
+class RoomAdmin(admin.ModelAdmin):
+    list_display = ('number', 'floor', 'price', 'capacity', 'status')
+    list_filter = ('floor', 'status')
+    search_fields = ('number',)
+    filter_horizontal = ('amenities',)
+
+@admin.register(Amenity)
+class AmenityAdmin(admin.ModelAdmin):
+    list_display = ('name', 'icon')
+    search_fields = ('name',)

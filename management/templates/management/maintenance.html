@@ -3,16 +3,60 @@
 {% block title %}Under Maintenance{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-    <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200 text-center max-w-md w-full">
-        <div class="text-orange-500 mb-4 flex justify-center">
-            <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+<div class="min-h-screen flex items-center justify-center bg-[#FFF7ED] relative overflow-hidden p-6">
+    
+    <div class="absolute -top-24 -left-24 w-96 h-96 bg-orange-200 rounded-full mix-blend-multiply filter blur-3xl opacity-50"></div>
+    <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-orange-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50"></div>
+
+    <div class="relative w-full max-w-[420px]">
+        <div class="bg-white/90 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_32px_64px_-15px_rgba(234,88,12,0.15)] border border-orange-100/50 p-10 text-center relative overflow-hidden">
+            
+            <div class="relative mb-8 flex justify-center">
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="w-20 h-20 bg-orange-100 rounded-full animate-ping opacity-40"></div>
+                    <div class="w-28 h-28 bg-orange-50 rounded-full animate-pulse opacity-30"></div>
+                </div>
+                
+                <div class="relative w-20 h-20 bg-gray-900 rounded-3xl flex items-center justify-center shadow-xl shadow-gray-200 transform -rotate-6 hover:rotate-0 transition-transform duration-500">
+                    <svg class="w-10 h-10 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <h2 class="text-3xl font-black text-gray-900 tracking-tight mb-3">System Update</h2>
+            <p class="text-orange-600 font-bold uppercase text-[10px] tracking-[0.2em] mb-6">Brief Intermission</p>
+            
+            <p class="text-gray-500 text-sm leading-relaxed mb-10 px-4">
+                We're currently fine-tuning our system to provide you with a better experience. We'll be back shortly!
+            </p>
+
+            <button onclick="window.location.reload()" class="group w-full inline-flex items-center justify-center bg-gray-900 hover:bg-orange-600 text-white font-bold py-5 rounded-2xl shadow-xl shadow-gray-200 hover:shadow-orange-200 transition-all duration-300 transform active:scale-95 gap-3">
+                <span class="tracking-widest text-xs uppercase">Check System Status</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 animate-spin-slow group-hover:rotate-180 transition-transform duration-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+            </button>
+
+            <div class="mt-8 pt-8 border-t border-gray-50">
+                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    Need urgent help? Visit the Front Desk
+                </p>
+            </div>
+
         </div>
-        <h1 class="text-2xl font-bold text-gray-800 mb-2">System Under Maintenance</h1>
-        <p class="text-gray-500 mb-6">We are currently performing scheduled maintenance. The registration form is temporarily unavailable. Please try again later.</p>
-        <button onclick="window.location.reload()" class="bg-gray-800 text-white font-bold py-2 px-6 rounded-lg hover:bg-gray-700 transition-colors">
-            Check Status
-        </button>
     </div>
 </div>
+
+<style>
+    /* Slow rotation for the gear/refresh icons */
+    .animate-spin-slow {
+        animation: spin 4s linear infinite;
+    }
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+</style>
 {% endblock %}

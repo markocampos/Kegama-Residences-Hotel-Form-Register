@@ -3,27 +3,86 @@
 {% block title %}Authorized Access Only{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-100 flex items-center justify-center p-4">
-    <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-200 text-center max-w-sm w-full">
-        <div class="text-blue-500 mb-4 flex justify-center">
-            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-        </div>
-        <h1 class="text-xl font-bold text-gray-800 mb-2">Restricted Access</h1>
-        <p class="text-gray-500 text-sm mb-6">This form is protected. Please enter the access code to continue.</p>
-        
-        <form method="post">
-            {% csrf_token %}
-            {% if error %}
-            <div class="bg-red-50 text-red-600 text-xs p-2 rounded mb-3 font-bold">
-                {{ error }}
-            </div>
-            {% endif %}
-            <input type="password" name="access_code" placeholder="Enter Access Code" required autofocus class="w-full text-center tracking-widest text-lg font-bold border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500 mb-4 p-3 uppercase">
+<div class="min-h-screen flex items-center justify-center bg-[#FFF7ED] relative overflow-hidden p-6">
+    
+    <div class="absolute -top-24 -left-24 w-96 h-96 bg-orange-200 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob"></div>
+    <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-orange-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-blob animation-delay-2000"></div>
+
+    <div class="relative w-full max-w-[400px]">
+        <div class="bg-white/90 backdrop-blur-2xl rounded-[2.5rem] shadow-[0_32px_64px_-15px_rgba(234,88,12,0.15)] border border-orange-100/50 p-10 text-center relative overflow-hidden">
             
-            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md transition-all">
-                UNLOCK FORM
-            </button>
-        </form>
+            <div class="relative mb-8 flex justify-center">
+                <div class="relative w-20 h-20 bg-gray-900 rounded-3xl flex items-center justify-center shadow-xl shadow-gray-200 transform rotate-3">
+                    <svg class="w-10 h-10 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <h2 class="text-3xl font-black text-gray-900 tracking-tight mb-2">Security Gate</h2>
+            <p class="text-orange-600 font-bold uppercase text-[10px] tracking-[0.2em] mb-8">Access Code Required</p>
+            
+            <form method="post" class="space-y-6">
+                {% csrf_token %}
+                
+                {% if error %}
+                <div class="bg-red-50 border border-red-100 text-red-600 p-3 rounded-2xl flex items-center gap-2 mb-4 animate-shake">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+                    </svg>
+                    <span class="text-[10px] font-black uppercase tracking-wider">{{ error }}</span>
+                </div>
+                {% endif %}
+
+                <div class="relative group">
+                    <input 
+                        type="password" 
+                        name="access_code" 
+                        placeholder="ENTER CODE" 
+                        required 
+                        autofocus 
+                        class="w-full bg-gray-50 border-2 border-gray-100 text-gray-900 text-xl font-black rounded-2xl py-5 px-4 text-center tracking-[0.3em] focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-100 outline-none transition-all duration-300 placeholder:text-gray-300 placeholder:tracking-normal placeholder:font-bold placeholder:text-xs"
+                    >
+                </div>
+                
+                <button type="submit" class="group w-full relative overflow-hidden bg-gray-900 hover:bg-orange-600 text-white font-black py-5 rounded-2xl shadow-xl shadow-gray-200 hover:shadow-orange-200 transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-3">
+                    <span class="tracking-widest text-xs uppercase">Unlock Registration</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                </button>
+            </form>
+
+            <div class="mt-8 pt-8 border-t border-gray-50">
+                <p class="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                    Authorized Personnel Only
+                </p>
+            </div>
+        </div>
     </div>
 </div>
+
+<style>
+    /* Background blob animations */
+    @keyframes blob {
+        0% { transform: translate(0px, 0px) scale(1); }
+        33% { transform: translate(30px, -50px) scale(1.1); }
+        66% { transform: translate(-20px, 20px) scale(0.9); }
+        100% { transform: translate(0px, 0px) scale(1); }
+    }
+    .animate-blob {
+        animation: blob 10s infinite;
+    }
+    .animation-delay-2000 { animation-delay: 2s; }
+
+    /* Error Shake */
+    @keyframes shake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(-5px); }
+        75% { transform: translateX(5px); }
+    }
+    .animate-shake {
+        animation: shake 0.4s ease-in-out;
+    }
+</style>
 {% endblock %}

@@ -1,8 +1,30 @@
 from django.test import TestCase, Client
 from django.urls import reverse
 from django.core.cache import cache
-from .models import GuestRegistration, AdminSettings, AuditLog
+from .models import GuestRegistration, AdminSettings, AuditLog, Room, Amenity
 import uuid
+
+class RoomModelTest(TestCase):
+    def test_create_room_with_amenities(self):
+        # Create Amenity
+        wifi = Amenity.objects.create(name="WiFi", icon="wifi-icon")
+        
+        # Create Room
+        room = Room.objects.create(
+            number="101",
+            floor="1st Floor",
+            price=1500,
+            capacity=2
+        )
+        
+        # Add amenity
+        room.amenities.add(wifi)
+        
+        # Assertions
+        self.assertEqual(room.number, "101")
+        self.assertEqual(room.amenities.count(), 1)
+        self.assertEqual(room.amenities.first().name, "WiFi")
+        self.assertEqual(str(room), "101 (1st Floor)")
 
 class GuestRegistrationModelTest(TestCase):
     def test_create_guest(self):

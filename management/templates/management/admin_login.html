@@ -3,27 +3,79 @@
 {% block title %}Management Login{% endblock %}
 
 {% block content %}
-<div class="min-h-screen flex items-center justify-center bg-gray-100 p-4">
+<div class="min-h-screen flex items-center justify-center bg-[#FFF7ED] relative overflow-hidden p-6">
     
-    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm">
-        <h2 class="text-2xl font-bold text-center text-gray-800 mb-6">Management Access</h2>
-        
-        {% if error %}
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-4 text-sm" role="alert">
-            <span class="block sm:inline">{{ error }}</span>
-        </div>
-        {% endif %}
+    <div class="absolute -top-24 -left-24 w-96 h-96 bg-orange-200 rounded-full mix-blend-multiply filter blur-3xl opacity-50"></div>
+    <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-orange-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50"></div>
 
-        <form method="post" class="space-y-6">
-            {% csrf_token %}
-            <div>
-                <label for="pin" class="block mb-2 text-sm font-medium text-gray-900">Security PIN</label>
-                <input type="password" name="pin" id="pin" inputmode="numeric" pattern="[0-9]*" class="bg-gray-50 border border-gray-300 text-gray-900 text-lg rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 text-center tracking-[1em]" placeholder="•••••" required>
-            </div>
+    <div class="relative w-full max-w-[400px]">
+        <div class="bg-white rounded-[2.5rem] shadow-[0_32px_64px_-15px_rgba(234,88,12,0.15)] border border-orange-100/50 p-10 overflow-hidden">
             
-            <button type="submit" class="w-full text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-3 me-2 mb-2">ACCESS DASHBOARD</button>
-        </form>
-    </div>
+            <div class="flex flex-col items-center mb-10">
+                <div class="w-16 h-16 bg-orange-600 rounded-2xl flex items-center justify-center shadow-lg shadow-orange-200 mb-4 transform rotate-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                </div>
+                <h1 class="text-2xl font-bold text-gray-900 tracking-tight">Security Access</h1>
+                <p class="text-gray-400 text-sm mt-1">Management dashboard is locked</p>
+            </div>
 
+            {% if error %}
+            <div class="mb-6 p-4 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3 animate-bounce-short">
+                <div class="w-2 h-2 bg-red-500 rounded-full"></div>
+                <p class="text-red-600 text-xs font-bold uppercase tracking-wider">{{ error }}</p>
+            </div>
+            {% endif %}
+
+            <form method="post" class="space-y-8">
+                {% csrf_token %}
+                
+                <div class="space-y-4">
+                    <label for="pin" class="block text-center text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Enter 5-Digit PIN</label>
+                    
+                    <div class="relative">
+                        <input 
+                            type="password" 
+                            name="pin" 
+                            id="pin" 
+                            maxlength="5"
+                            inputmode="numeric"
+                            pattern="[0-9]*"
+                            required
+                            autofocus
+                            placeholder="•••••"
+                            class="w-full bg-gray-50 border-2 border-gray-100 text-gray-900 text-4xl rounded-2xl py-5 px-4 text-center tracking-[0.5em] focus:bg-white focus:border-orange-500 focus:ring-4 focus:ring-orange-100 outline-none transition-all duration-300 placeholder:text-gray-200 font-mono"
+                        >
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full group bg-gray-900 hover:bg-orange-600 text-white font-bold py-5 rounded-2xl shadow-xl shadow-gray-200 hover:shadow-orange-200 transition-all duration-300 transform active:scale-95 flex items-center justify-center gap-2">
+                    <span class="tracking-widest text-xs">UNLOCK DASHBOARD</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                    </svg>
+                </button>
+            </form>
+        </div>
+    </div>
 </div>
+
+<style>
+    /* Clean custom animations */
+    @keyframes bounce-short {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-4px); }
+    }
+    .animate-bounce-short {
+        animation: bounce-short 0.5s ease-in-out;
+    }
+
+    /* Remove Arrows from Number Input */
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+    }
+</style>
 {% endblock %}

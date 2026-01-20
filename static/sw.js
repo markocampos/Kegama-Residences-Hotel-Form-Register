@@ -30,6 +30,11 @@ self.addEventListener('activate', (e) => {
 });
 
 self.addEventListener('fetch', (e) => {
+  // Only cache GET requests
+  if (e.request.method !== 'GET') {
+    return;
+  }
+
   e.respondWith(
     fetch(e.request).catch(() => caches.match(e.request))
   );

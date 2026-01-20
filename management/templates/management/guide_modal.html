@@ -1,64 +1,86 @@
-<!-- Guide Modal -->
+<!-- Guide Modal (Tagalog) -->
 <div id="guideModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <!-- Backdrop -->
-    <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity backdrop-blur-sm" onclick="toggleGuideModal()"></div>
+    <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" onclick="toggleGuideModal()"></div>
 
     <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
-        <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
+        <div class="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
             
-            <div class="relative transform overflow-hidden rounded-lg bg-white text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-2xl">
+            <div class="relative transform overflow-hidden rounded-[2.5rem] bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-2xl border border-gray-100">
                 
                 <!-- Header -->
-                <div class="bg-orange-600 px-4 py-3 sm:px-6 flex justify-between items-center">
-                    <h3 class="text-base font-semibold leading-6 text-white" id="modal-title">
-                        <svg class="w-5 h-5 inline-block mr-1 -mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        Usage Guide: Guest Details
+                <div class="bg-gradient-to-r from-orange-600 to-orange-500 px-6 py-5 flex justify-between items-center">
+                    <h3 class="text-lg font-black tracking-tight text-white flex items-center gap-2" id="modal-title">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Gabay sa Guest Details
                     </h3>
-                    <button type="button" class="text-orange-200 hover:text-white" onclick="toggleGuideModal()">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    <button type="button" class="text-orange-100 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full p-1" onclick="toggleGuideModal()">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                     </button>
                 </div>
 
                 <!-- Content -->
-                <div class="px-4 py-5 sm:p-6 max-h-[70vh] overflow-y-auto space-y-4 text-sm text-gray-600">
+                <div class="px-8 py-8 max-h-[70vh] overflow-y-auto space-y-8 text-sm text-gray-600">
                     
-                    <div class="border-b pb-3">
-                        <h4 class="font-bold text-gray-900 mb-1">1. Guest Profile</h4>
-                        <p>Update personal details like name, contact info, and booking source. Ensure the <strong>Phone Number</strong> follows the <code>09XX XXX XXXX</code> format (auto-formatted).</p>
-                    </div>
-
-                    <div class="border-b pb-3">
-                        <h4 class="font-bold text-gray-900 mb-1">2. Room & Duration</h4>
-                        <ul class="list-disc pl-5 space-y-1">
-                            <li><strong>Room Selection:</strong> Choose a room to auto-fill the standard rate and capacity.</li>
-                            <li><strong>Check-in/Out:</strong> Manually pick dates OR use the <strong>Duration Buttons</strong> (6H, 10H, 22H) for quick setting.</li>
-                            <li><strong>Short Stays:</strong> Setting "Nights" to <code>0</code> will label the stay as "Short Stay" on the PDF.</li>
-                            <li><strong>Dates & Nights:</strong> Changing dates automatically calculates nights, and vice-versa.</li>
+                    <div class="bg-orange-50/50 p-5 rounded-3xl border border-orange-100">
+                        <h4 class="font-black text-orange-800 uppercase tracking-widest text-xs mb-3">1. Guest Profile</h4>
+                        <p class="leading-relaxed mb-3">Dito ilalagay ang impormasyon ng bisita tulad ng pangalan at contact details.</p>
+                        <ul class="list-disc pl-5 space-y-2 text-xs">
+                            <li><strong>Phone Number:</strong> Kusang mag-fo-format bilang <code>09XX XXX XXXX</code> habang nag-ta-type.</li>
+                            <li><strong>Booking Source:</strong> Piliin kung saan galing ang booking (OYO, Airbnb, o Walk-in).</li>
                         </ul>
                     </div>
 
-                    <div class="border-b pb-3">
-                        <h4 class="font-bold text-gray-900 mb-1">3. Financials</h4>
-                        <ul class="list-disc pl-5 space-y-1">
-                            <li><strong>Room Rate:</strong> Can be manually overridden. Use numbers only.</li>
-                            <li><strong>Mode of Payment:</strong> Select from CASH, GCASH, MAYA, or BANK TRANSFER.</li>
-                            <li><strong>Additional Requests:</strong> Click "ADD ITEM" to include extra charges (e.g., Extra Bed, Food). These appear on the receipt.</li>
+                    <div class="space-y-4">
+                        <h4 class="font-black text-gray-900 uppercase tracking-widest text-xs">2. Kwarto at Durasyon</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-gray-50 p-4 rounded-2xl">
+                                <span class="font-bold text-gray-900 block mb-1">Room Selection</span>
+                                <p class="text-[11px]">Kapag pumili ng kwarto, kusang lalabas ang standard rate at capacity nito.</p>
+                            </div>
+                            <div class="bg-gray-50 p-4 rounded-2xl">
+                                <span class="font-bold text-gray-900 block mb-1">Duration Buttons</span>
+                                <p class="text-[11px]">Gamitin ang <strong>6H, 10H, o 22H</strong> buttons para mabilis na ma-set ang oras at presyo.</p>
+                            </div>
+                        </div>
+                        <p class="text-xs italic text-gray-400">Tandaan: Ang pag-change ng dates ay automatic na mag-re-compute ng bilang ng "Nights".</p>
+                    </div>
+
+                    <div class="border-t border-gray-100 pt-6">
+                        <h4 class="font-black text-gray-900 uppercase tracking-widest text-xs mb-4">3. Bayad at Requests</h4>
+                        <ul class="space-y-4">
+                            <li class="flex gap-4">
+                                <div class="w-8 h-8 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 font-bold">₱</div>
+                                <div>
+                                    <span class="font-bold text-gray-900 block text-xs">Additional Requests</span>
+                                    <p class="text-xs">I-click ang "ADD ITEM" para sa mga extra (hal. Extra Bed, Food). Lalabas ito sa resibo.</p>
+                                </div>
+                            </li>
+                            <li class="flex gap-4">
+                                <div class="w-8 h-8 rounded-full bg-green-50 text-green-600 flex items-center justify-center shrink-0 font-bold">✓</div>
+                                <div>
+                                    <span class="font-bold text-gray-900 block text-xs">Security Deposit</span>
+                                    <p class="text-xs">I-click ang "Edit" para mabago ang halaga ng deposit kung kinakailangan.</p>
+                                </div>
+                            </li>
                         </ul>
                     </div>
 
-                    <div>
-                        <h4 class="font-bold text-gray-900 mb-1">4. Actions</h4>
-                        <ul class="list-disc pl-5 space-y-1">
-                            <li><strong>Update Details Only:</strong> Saves changes to the database without generating a file.</li>
-                            <li><strong>Confirm & Print PDF:</strong> Saves changes AND downloads the official Guest Registration Form PDF.</li>
-                        </ul>
+                    <div class="bg-gray-900 text-white p-6 rounded-3xl space-y-3">
+                        <h4 class="font-black uppercase tracking-widest text-xs text-orange-400">4. Pag-Save at Print</h4>
+                        <p class="text-xs opacity-80 leading-relaxed">
+                            Gamitin ang <strong>Update Details Only</strong> kung gusto lang i-save ang info.<br><br>
+                            Gamitin ang <strong>Confirm & Print PDF</strong> para i-save at i-download ang official Guest Registration Form.
+                        </p>
                     </div>
 
                 </div>
 
                 <!-- Footer -->
-                <div class="bg-gray-50 px-4 py-3 sm:flex sm:flex-row-reverse sm:px-6">
-                    <button type="button" class="mt-3 inline-flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 sm:mt-0 sm:w-auto" onclick="toggleGuideModal()">Close Guide</button>
+                <div class="bg-gray-50 px-8 py-5 sm:flex sm:flex-row-reverse border-t border-gray-100">
+                    <button type="button" class="w-full inline-flex justify-center items-center gap-2 rounded-2xl bg-gray-900 px-8 py-4 text-xs font-bold text-white shadow-sm hover:bg-gray-800 sm:w-auto uppercase tracking-widest transition-all" onclick="toggleGuideModal()">
+                        Naintindihan Ko
+                    </button>
                 </div>
             </div>
         </div>

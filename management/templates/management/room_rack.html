@@ -1,88 +1,124 @@
 {% extends 'management/base.html' %}
 {% load humanize %}
 
-{% block title %}Room Status Rack{% endblock %}
+{% block title %}Room Rack | Admin{% endblock %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-100 pb-20">
-    <!-- Navbar -->
-    <nav class="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-20 flex justify-between items-center shadow-sm">
-        <a href="{% url 'dashboard' %}" class="flex items-center gap-2 text-gray-500 hover:text-orange-600 transition-colors">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-            <span class="font-bold text-sm">Dashboard</span>
-        </a>
-        <span class="font-bold text-lg tracking-tight text-gray-900"><span class="text-orange-600">ROOM</span> STATUS</span>
+<div class="min-h-screen bg-gray-50 pb-20">
+    <!-- Modern Desktop Header -->
+    <nav class="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-20 flex justify-between items-center backdrop-blur-md bg-white/90">
+        <div class="flex items-center gap-4">
+            <a href="{% url 'dashboard' %}" class="flex items-center gap-2 text-gray-400 hover:text-orange-600 transition-all group">
+                <svg class="w-5 h-5 transform group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                <span class="font-bold text-sm">Dashboard</span>
+            </a>
+            <div class="h-4 w-[1px] bg-gray-200"></div>
+            <span class="font-black text-lg tracking-tighter text-gray-900 uppercase">Room Status Rack</span>
+            <button onclick="toggleRackGuide()" class="ml-2 text-xs font-bold text-orange-600 border border-orange-200 bg-orange-50 hover:bg-orange-100 px-2 py-1 rounded-md flex items-center gap-1 transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Guide
+            </button>
+        </div>
         
-        <!-- Legend (Hidden on small screens) -->
-        <div class="hidden md:flex gap-4 text-xs font-bold uppercase tracking-wider">
-            <div class="flex items-center gap-1"><div class="w-3 h-3 bg-green-500 rounded-full"></div> Available</div>
-            <div class="flex items-center gap-1"><div class="w-3 h-3 bg-yellow-400 rounded-full"></div> Pending</div>
-            <div class="flex items-center gap-1"><div class="w-3 h-3 bg-red-500 rounded-full"></div> Occupied</div>
+        <!-- Legend (Desktop) -->
+        <div class="hidden md:flex items-center gap-6">
+            <div class="flex items-center gap-2">
+                <div class="w-3 h-3 bg-green-500 rounded-full shadow-sm shadow-green-200"></div>
+                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Available</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="w-3 h-3 bg-yellow-400 rounded-full shadow-sm shadow-yellow-200 animate-pulse"></div>
+                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pending</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="w-3 h-3 bg-red-500 rounded-full shadow-sm shadow-red-200"></div>
+                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Occupied</span>
+            </div>
         </div>
     </nav>
 
-    <div class="p-4 max-w-7xl mx-auto space-y-8">
+    <div class="p-6 md:p-8 lg:p-12 max-w-7xl mx-auto space-y-12">
         
         {% for floor, rooms in rack_data.items %}
-        <div>
-            <h3 class="font-bold text-gray-500 uppercase tracking-widest text-sm mb-4 pl-1 border-l-4 border-orange-500 flex items-center gap-2">
+        <div class="space-y-6">
+            <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] pl-2 flex items-center gap-2">
+                <span class="w-2 h-2 bg-orange-500 rounded-full"></span>
                 {{ floor }}
-                <span class="text-[10px] bg-gray-200 text-gray-600 px-2 py-0.5 rounded-full">{{ rooms|length }} Rooms</span>
+                <span class="text-[9px] bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full tracking-normal ml-2">{{ rooms|length }} Rooms</span>
             </h3>
             
-            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
                 {% for room in rooms %}
                     {% if room.status == 'AVAILABLE' %}
                         <!-- AVAILABLE CARD -->
-                        <div class="bg-white border-l-4 border-green-500 rounded-lg shadow-sm p-4 flex flex-col justify-between h-32 hover:shadow-md transition-shadow relative overflow-hidden">
-                            <div class="absolute top-0 right-0 p-1">
-                                <span class="bg-green-100 text-green-700 text-[10px] font-bold px-1.5 py-0.5 rounded">FREE</span>
+                        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between h-40 hover:shadow-xl hover:shadow-green-500/5 transition-all group relative overflow-hidden">
+                            <div class="absolute -top-4 -right-4 w-16 h-16 bg-green-50 rounded-full transition-transform group-hover:scale-150 duration-500"></div>
+                            <div class="relative z-10">
+                                <span class="text-[10px] font-black text-green-600 uppercase tracking-widest">Free</span>
+                                <h4 class="text-3xl font-black text-gray-900 mt-1">{{ room.id }}</h4>
                             </div>
-                            <div>
-                                <h4 class="text-2xl font-bold text-gray-800">{{ room.id }}</h4>
-                                <p class="text-xs text-gray-400 font-mono mt-1">₱{{ room.price|intcomma }}</p>
+                            <div class="relative z-10 flex items-center justify-between">
+                                <span class="text-xs font-black text-gray-400 tracking-tighter">₱{{ room.price|intcomma }}</span>
+                                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
                             </div>
                         </div>
 
                     {% elif room.status == 'PENDING' and room.guest_id %}
                         <!-- PENDING CARD -->
-                        <a href="{% url 'update_guest' room.guest_id %}" class="bg-yellow-50 border-l-4 border-yellow-400 rounded-lg shadow-sm p-4 flex flex-col justify-between h-32 hover:shadow-md transition-shadow relative cursor-pointer group">
-                            <div class="absolute top-0 right-0 p-1">
-                                <span class="bg-yellow-200 text-yellow-800 text-[10px] font-bold px-1.5 py-0.5 rounded animate-pulse">PENDING</span>
+                        <a href="{% url 'update_guest' room.guest_id %}" class="bg-white rounded-3xl shadow-sm border-2 border-yellow-100 p-6 flex flex-col justify-between h-40 hover:shadow-xl hover:shadow-yellow-500/10 transition-all group relative overflow-hidden">
+                            <div class="absolute -top-4 -right-4 w-16 h-16 bg-yellow-50 rounded-full animate-pulse transition-transform group-hover:scale-150 duration-500"></div>
+                            <div class="relative z-10">
+                                <span class="text-[10px] font-black text-yellow-600 uppercase tracking-widest">Verifying</span>
+                                <h4 class="text-3xl font-black text-gray-900 mt-1">{{ room.id }}</h4>
+                                <p class="text-[10px] font-bold text-gray-500 truncate mt-2">{{ room.guest_name|upper }}</p>
                             </div>
-                            <div>
-                                <h4 class="text-2xl font-bold text-gray-800">{{ room.id }}</h4>
-                                <p class="text-xs font-bold text-gray-600 truncate mt-2 group-hover:underline">{{ room.guest_name }}</p>
-                            </div>
-                            <div class="text-[10px] text-gray-400 flex items-center gap-1">
-                                Click to verify
+                            <div class="relative z-10 flex items-center justify-between">
+                                <span class="text-[9px] font-black text-yellow-600 tracking-widest uppercase">Click to verify</span>
+                                <div class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
                             </div>
                         </a>
 
                     {% elif room.status == 'OCCUPIED' and room.guest_id %}
-                        <!-- OCCUPIED CARD -->
-                        <a href="{% url 'update_guest' room.guest_id %}" class="bg-red-50 border-l-4 border-red-500 rounded-lg shadow-sm p-4 flex flex-col justify-between h-32 hover:shadow-md transition-shadow relative cursor-pointer group">
-                            <div class="absolute top-0 right-0 p-1">
-                                <span class="bg-red-200 text-red-800 text-[10px] font-bold px-1.5 py-0.5 rounded">OCCUPIED</span>
-                            </div>
-                            <div>
-                                <h4 class="text-2xl font-bold text-gray-800">{{ room.id }}</h4>
-                                <p class="text-xs font-bold text-gray-900 truncate mt-2 group-hover:underline">{{ room.guest_name }}</p>
-                            </div>
-                            <div class="text-[10px] text-red-400 flex items-center gap-1 font-bold">
-                                View Details &rarr;
-                            </div>
-                        </a>
+                        {% if room.is_advance %}
+                            <!-- ADVANCE BOOKING CARD -->
+                            <a href="{% url 'update_guest' room.guest_id %}" class="bg-blue-50 rounded-3xl shadow-sm border border-blue-100 p-6 flex flex-col justify-between h-40 hover:shadow-lg hover:shadow-blue-500/10 transition-all group relative overflow-hidden">
+                                <div class="absolute -top-4 -right-4 w-16 h-16 bg-blue-100/50 rounded-full transition-transform group-hover:scale-150 duration-500"></div>
+                                <div class="relative z-10">
+                                    <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Advance</span>
+                                    <h4 class="text-3xl font-black text-gray-900 mt-1">{{ room.id }}</h4>
+                                    <p class="text-[10px] font-bold text-gray-500 truncate mt-2">{{ room.guest_name|upper }}</p>
+                                </div>
+                                <div class="relative z-10 flex items-center justify-between">
+                                    <span class="text-[9px] font-black text-blue-500 tracking-widest uppercase">View Booking &rarr;</span>
+                                    <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                                </div>
+                            </a>
+                        {% else %}
+                            <!-- OCCUPIED CARD -->
+                            <a href="{% url 'update_guest' room.guest_id %}" class="bg-gray-900 rounded-3xl shadow-lg p-6 flex flex-col justify-between h-40 hover:bg-black transition-all group relative overflow-hidden">
+                                <div class="absolute -top-4 -right-4 w-16 h-16 bg-white/5 rounded-full transition-transform group-hover:scale-150 duration-500"></div>
+                                <div class="relative z-10">
+                                    <span class="text-[10px] font-black text-red-400 uppercase tracking-widest">In Stay</span>
+                                    <h4 class="text-3xl font-black text-white mt-1">{{ room.id }}</h4>
+                                    <p class="text-[10px] font-bold text-gray-400 truncate mt-2">{{ room.guest_name|upper }}</p>
+                                </div>
+                                <div class="relative z-10 flex items-center justify-between">
+                                    <span class="text-[9px] font-black text-red-400 tracking-widest uppercase">Check Details &rarr;</span>
+                                    <div class="w-2 h-2 bg-red-500 rounded-full shadow-sm shadow-red-500/50"></div>
+                                </div>
+                            </a>
+                        {% endif %}
                     
                     {% else %}
-                        <!-- GENERIC STATUS (No Guest Link) -->
-                        <div class="bg-gray-100 border-l-4 border-gray-400 rounded-lg shadow-sm p-4 flex flex-col justify-between h-32 relative">
-                            <div class="absolute top-0 right-0 p-1">
-                                <span class="bg-gray-300 text-gray-700 text-[10px] font-bold px-1.5 py-0.5 rounded uppercase">{{ room.status }}</span>
-                            </div>
+                        <!-- MAINTENANCE/OTHER -->
+                        <div class="bg-white opacity-60 rounded-3xl border border-gray-200 p-6 flex flex-col justify-between h-40 relative grayscale">
                             <div>
-                                <h4 class="text-2xl font-bold text-gray-500">{{ room.id }}</h4>
-                                <p class="text-xs text-gray-400 font-mono mt-1">₱{{ room.price|intcomma }}</p>
+                                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ room.status }}</span>
+                                <h4 class="text-3xl font-black text-gray-400 mt-1">{{ room.id }}</h4>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-gray-300 tracking-tighter">Unavailable</span>
+                                <div class="w-2 h-2 bg-gray-300 rounded-full"></div>
                             </div>
                         </div>
                     {% endif %}
@@ -93,4 +129,6 @@
 
     </div>
 </div>
+
+{% include 'management/guide_rack.html' %}
 {% endblock %}

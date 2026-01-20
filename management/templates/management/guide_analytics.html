@@ -1,0 +1,90 @@
+<!-- Analytics Guide Modal (Tagalog) -->
+<div id="analyticsGuideModal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" onclick="toggleAnalyticsGuide()"></div>
+
+    <div class="fixed inset-0 z-10 w-screen overflow-y-auto">
+        <div class="flex min-h-full items-center justify-center p-4 text-center">
+            
+            <div class="relative transform overflow-hidden rounded-[2.5rem] bg-white text-left shadow-2xl transition-all sm:w-full sm:max-w-2xl border border-gray-100">
+                
+                <!-- Header -->
+                <div class="bg-gradient-to-r from-orange-600 to-orange-500 px-6 py-5 flex justify-between items-center">
+                    <h3 class="text-lg font-black tracking-tight text-white flex items-center gap-2" id="modal-title">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        Gabay sa Analytics
+                    </h3>
+                    <button type="button" class="text-orange-100 hover:text-white transition-colors bg-white/10 hover:bg-white/20 rounded-full p-1" onclick="toggleAnalyticsGuide()">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                    </button>
+                </div>
+
+                <!-- Content -->
+                <div class="px-8 py-8 max-h-[70vh] overflow-y-auto space-y-6 text-sm text-gray-600">
+                    
+                    <div class="bg-orange-50/50 p-5 rounded-3xl border border-orange-100">
+                        <h4 class="font-black text-orange-800 uppercase tracking-widest text-xs mb-2">Para saan ito?</h4>
+                        <p class="leading-relaxed">Dito mo makikita ang performance ng business. Ipinapakita nito kung magkano ang kinita at ilan ang naging bisita sa loob ng isang panahon.</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <h4 class="font-bold text-gray-900 flex items-center gap-2 text-xs uppercase tracking-wide">
+                                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                                Key Metrics
+                            </h4>
+                            <p class="text-[11px] leading-relaxed">
+                                <strong>Total Revenue:</strong> Kabuuang benta mula sa lahat ng transaction.<br>
+                                <strong>Total Guests:</strong> Kabuuang bilang ng unique bookings.<br>
+                                <strong>Check-ins Today:</strong> Bilang ng bisitang pumasok ngayong araw.
+                            </p>
+                        </div>
+                        <div class="space-y-2">
+                            <h4 class="font-bold text-gray-900 flex items-center gap-2 text-xs uppercase tracking-wide">
+                                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                                Filters
+                            </h4>
+                            <p class="text-[11px] leading-relaxed">
+                                Gamitin ang <strong>Daily, Weekly, Monthly, o Yearly</strong> buttons sa Revenue Trend chart para baguhin ang panahong sakop ng graph.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="border-t border-gray-100 pt-6">
+                        <h4 class="font-bold text-gray-900 mb-3 text-xs uppercase tracking-widest">Iba pang Features:</h4>
+                        <ul class="space-y-3">
+                            <li class="flex items-center gap-3">
+                                <span class="w-6 h-6 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center font-bold text-xs shrink-0">1</span>
+                                <div>
+                                    <span class="font-bold text-gray-900 text-xs block">Market Share</span>
+                                    <span class="text-xs text-gray-500">Makikita kung saan galing ang karamihan ng guests (hal. Walk-in, OYO, Airbnb).</span>
+                                </div>
+                            </li>
+                            <li class="flex items-center gap-3">
+                                <span class="w-6 h-6 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center font-bold text-xs shrink-0">2</span>
+                                <div>
+                                    <span class="font-bold text-gray-900 text-xs block">Export Report</span>
+                                    <span class="text-xs text-gray-500">I-click ang button sa taas para i-download ang PDF report ng iyong sales.</span>
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Footer -->
+                <div class="bg-gray-50 px-8 py-5 sm:flex sm:flex-row-reverse border-t border-gray-100">
+                    <button type="button" class="w-full inline-flex justify-center items-center gap-2 rounded-2xl bg-gray-900 px-8 py-4 text-xs font-bold text-white shadow-sm hover:bg-gray-800 sm:w-auto uppercase tracking-widest transition-all" onclick="toggleAnalyticsGuide()">
+                        Sige, Gets Ko Na
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleAnalyticsGuide() {
+        const modal = document.getElementById('analyticsGuideModal');
+        modal.classList.toggle('hidden');
+    }
+</script>

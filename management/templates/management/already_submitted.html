@@ -3,20 +3,50 @@
 {% block title %}Already Registered{% endblock %}
 
 {% block content %}
-<div class="max-w-md mx-auto bg-white min-h-screen shadow-lg flex flex-col items-center justify-center p-8 text-center">
+<div class="min-h-screen flex items-center justify-center bg-[#FFF7ED] relative overflow-hidden p-6">
     
-    <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-6">
-        <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+    <div class="absolute -top-24 -left-24 w-96 h-96 bg-orange-200 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-pulse"></div>
+    <div class="absolute -bottom-24 -right-24 w-96 h-96 bg-orange-100 rounded-full mix-blend-multiply filter blur-3xl opacity-50 animate-pulse" style="animation-delay: 2s;"></div>
+
+    <div class="relative w-full max-w-[450px]">
+        <div class="bg-white rounded-[2.5rem] shadow-[0_32px_64px_-15px_rgba(234,88,12,0.15)] border border-orange-100/50 p-10 text-center overflow-hidden">
+            
+            <div class="relative mb-8 flex justify-center">
+                <div class="absolute inset-0 flex items-center justify-center animate-ping opacity-20">
+                    <div class="w-20 h-20 bg-orange-400 rounded-full"></div>
+                </div>
+                
+                <div class="relative w-20 h-20 bg-orange-600 rounded-3xl flex items-center justify-center shadow-lg shadow-orange-200 transform rotate-3">
+                    <svg class="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+            </div>
+
+            <h2 class="text-3xl font-black text-gray-900 tracking-tight mb-3">Check-in Found</h2>
+            <p class="text-gray-500 font-medium leading-relaxed mb-8">
+                An active registration is already associated with this device. 
+            </p>
+            
+            <div class="bg-orange-50/50 border border-orange-100 p-5 rounded-2xl text-left mb-10">
+                <div class="flex gap-3">
+                    <svg class="w-5 h-5 text-orange-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <p class="text-orange-900 text-sm leading-snug">
+                        To register another guest or correct an error, please visit the <strong>Front Desk</strong> for assistance.
+                    </p>
+                </div>
+            </div>
+
+            <a href="/" class="group w-full inline-flex items-center justify-center bg-gray-900 hover:bg-orange-600 text-white font-bold py-5 rounded-2xl shadow-xl shadow-gray-200 hover:shadow-orange-200 transition-all duration-300 transform active:scale-95 gap-2">
+                <span class="tracking-widest text-xs">RETURN TO HOME</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+            </a>
+
+        </div>
     </div>
-
-    <h2 class="text-xl font-bold text-gray-800 mb-2">Active Registration Found</h2>
-    <p class="text-gray-600 mb-6 text-sm">You have recently submitted a registration form on this device.</p>
-    
-    <div class="bg-gray-50 p-4 rounded-lg w-full text-left mb-6 text-sm border border-gray-200">
-        <p>If you need to register another guest or this is a mistake, please ask the front desk for assistance.</p>
-    </div>
-
-    <a href="/" class="text-blue-600 text-sm font-semibold hover:underline">Return to Home</a>
-
 </div>
 {% endblock %}

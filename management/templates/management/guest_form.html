@@ -66,11 +66,11 @@
                 <div class="grid grid-cols-2 gap-5">
                     <div>
                         <label for="first_name" class="block mb-2 text-sm font-semibold text-gray-700">First Name</label>
-                        <input type="text" name="first_name" id="first_name" class="bg-gray-50 border border-gray-300 text-gray-900 text-base rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-3 shadow-sm uppercase placeholder:normal-case" placeholder="John" required />
+                        <input type="text" name="first_name" id="first_name" class="bg-gray-50 border border-gray-300 text-gray-900 text-base rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-3 shadow-sm uppercase placeholder:normal-case" placeholder="John" required pattern="[A-Za-z\s\.\-]+" title="Only letters, spaces, dots, and hyphens allowed" />
                     </div>
                     <div>
                         <label for="last_name" class="block mb-2 text-sm font-semibold text-gray-700">Last Name</label>
-                        <input type="text" name="last_name" id="last_name" class="bg-gray-50 border border-gray-300 text-gray-900 text-base rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-3 shadow-sm uppercase placeholder:normal-case" placeholder="Doe" required />
+                        <input type="text" name="last_name" id="last_name" class="bg-gray-50 border border-gray-300 text-gray-900 text-base rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-3 shadow-sm uppercase placeholder:normal-case" placeholder="Doe" required pattern="[A-Za-z\s\.\-]+" title="Only letters, spaces, dots, and hyphens allowed" />
                     </div>
                 </div>
 
@@ -81,18 +81,67 @@
 
                 <div>
                     <label for="phone" class="block mb-2 text-sm font-semibold text-gray-700">Phone Number</label>
-                    <input type="tel" name="phone" id="phone" class="bg-gray-50 border border-gray-300 text-gray-900 text-base rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-3 shadow-sm" placeholder="0900 000 0000" required />
+                    <input type="tel" name="phone" id="phone" class="bg-gray-50 border border-gray-300 text-gray-900 text-base rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-3 shadow-sm" placeholder="0900 000 0000" required maxlength="13" />
+                    <p id="phone-network" class="mt-1 text-xs font-medium text-gray-500"></p>
                 </div>
 
-                <div>
-                    <label for="email" class="block mb-2 text-sm font-semibold text-gray-700">Email Address</label>
-                    <input type="email" name="email" id="email" class="bg-gray-50 border border-gray-300 text-gray-900 text-base rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-3 shadow-sm" placeholder="name@example.com" />
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    <div>
+                        <label for="email" class="block mb-2 text-sm font-semibold text-gray-700">Email Address <span class="text-xs font-normal text-gray-400">(Optional)</span></label>
+                        <input type="email" name="email" id="email" class="bg-gray-50 border border-gray-300 text-gray-900 text-base rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-3 shadow-sm" placeholder="name@example.com" />
+                    </div>
+                    <div>
+                        <label for="car_plate" class="block mb-2 text-sm font-semibold text-gray-700">Car Plate <span class="text-xs font-normal text-gray-400">(Optional)</span></label>
+                        <input type="text" name="car_plate" id="car_plate" class="bg-gray-50 border border-gray-300 text-gray-900 text-base rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-3 shadow-sm uppercase placeholder:normal-case" placeholder="ABC 1234" />
+                    </div>
                 </div>
 
                 <div class="grid grid-cols-2 gap-5">
-                    <div>
-                        <label for="birth_date" class="block mb-2 text-sm font-semibold text-gray-700">Birth Date</label>
-                        <input type="date" name="birth_date" id="birth_date" class="bg-gray-50 border border-gray-300 text-gray-900 text-base rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-3 shadow-sm" required/>
+                    <div x-data="{
+                        day: '',
+                        month: '',
+                        year: '',
+                        maxYear: new Date().getFullYear() - 18,
+                        get isUnderage() {
+                            if (this.year && this.year.length === 4) {
+                                return parseInt(this.year) > this.maxYear;
+                            }
+                            return false;
+                        },
+                        get date() {
+                            if (this.day && this.month && this.year && !this.isUnderage) {
+                                return `${this.year}-${this.month}-${this.day.toString().padStart(2, '0')}`;
+                            }
+                            return '';
+                        }
+                    }">
+                        <label class="block mb-2 text-sm font-semibold text-gray-700">Birth Date</label>
+                        <input type="hidden" name="birth_date" :value="date" required>
+                        
+                        <div class="grid grid-cols-3 gap-2">
+                            <select x-model="month" class="bg-gray-50 border border-gray-300 text-gray-900 text-base rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-3 shadow-sm" required>
+                                <option value="" disabled selected>Month</option>
+                                <option value="01">Jan</option>
+                                <option value="02">Feb</option>
+                                <option value="03">Mar</option>
+                                <option value="04">Apr</option>
+                                <option value="05">May</option>
+                                <option value="06">Jun</option>
+                                <option value="07">Jul</option>
+                                <option value="08">Aug</option>
+                                <option value="09">Sep</option>
+                                <option value="10">Oct</option>
+                                <option value="11">Nov</option>
+                                <option value="12">Dec</option>
+                            </select>
+                            
+                            <input type="tel" x-model="day" maxlength="2" placeholder="DD" class="bg-gray-50 border border-gray-300 text-gray-900 text-base rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-3 shadow-sm text-center" required>
+                            
+                            <input type="tel" x-model="year" maxlength="4" :class="isUnderage ? 'border-red-500 ring-red-100 ring-4' : ''" placeholder="YYYY" class="bg-gray-50 border border-gray-300 text-gray-900 text-base rounded-lg focus:ring-orange-500 focus:border-orange-500 block w-full p-3 shadow-sm text-center" required>
+                        </div>
+                        <template x-if="isUnderage">
+                            <p class="mt-1.5 text-[10px] font-bold text-red-600 uppercase tracking-tight">Must be at least 18 years old to register.</p>
+                        </template>
                     </div>
                     <div>
                         <label for="gender" class="block mb-2 text-sm font-semibold text-gray-700">Gender</label>
@@ -112,7 +161,7 @@
                     <svg class="w-6 h-6 text-orange-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     <div>
                         <h4 class="font-bold text-orange-800 text-sm uppercase tracking-wide mb-1">Reservation Policy</h4>
-                        <p class="text-sm text-orange-900 mb-2 font-medium">Check-in: 2PM - 9PM • Check-out: 12NN</p>
+                        <p class="text-sm text-orange-900 mb-2 font-medium">Check-in: 2PM • Check-out: 12NN</p>
                         <ul class="text-xs text-orange-800/80 space-y-1 list-disc pl-4">
                             <li>Early check-in subject to availability.</li>
                             <li>Rooms not occupied by 2PM considered no-show.</li>
@@ -133,10 +182,52 @@
             <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     const phoneInput = document.getElementById('phone');
+                    const networkDisplay = document.getElementById('phone-network');
+                    
+                    const ditoPrefixes = ['0991', '0992', '0993', '0994', '0895', '0896', '0897', '0898'];
+                    const globePrefixes = ['0905', '0906', '0915', '0916', '0917', '0926', '0927', '0935', '0936', '0937', '0945', '0953', '0954', '0955', '0956', '0965', '0966', '0967', '0975', '0977', '0978', '0979', '0995', '0996', '0997'];
+                    const smartPrefixes = ['0907', '0908', '0909', '0910', '0911', '0912', '0913', '0914', '0918', '0919', '0920', '0921', '0928', '0929', '0930', '0931', '0938', '0939', '0940', '0946', '0947', '0948', '0949', '0950', '0951', '0961', '0963', '0968', '0969', '0970', '0981', '0989', '0998', '0999'];
+
                     if(phoneInput) {
                         phoneInput.addEventListener('input', function(e) {
-                            let x = e.target.value.replace(/\D/g, '').match(/(\d{0,4})(\d{0,3})(\d{0,4})/);
+                            // Format number
+                            let raw = e.target.value.replace(/\D/g, '');
+                            let x = raw.match(/(\d{0,4})(\d{0,3})(\d{0,4})/);
                             e.target.value = !x[2] ? x[1] : x[1] + ' ' + x[2] + (x[3] ? ' ' + x[3] : '');
+
+                            // Identify Network
+                            if (raw.length >= 2) {
+                                const start = raw.substring(0, 2);
+                                if (start === '09' || start === '08') {
+                                    if (raw.length >= 4) {
+                                        const prefix = raw.substring(0, 4);
+                                        if (ditoPrefixes.includes(prefix)) {
+                                            networkDisplay.textContent = 'Dito Telecommunity';
+                                            networkDisplay.className = 'mt-1 text-xs font-bold text-blue-600';
+                                        } else if (globePrefixes.includes(prefix)) {
+                                            networkDisplay.textContent = 'Globe / TM';
+                                            networkDisplay.className = 'mt-1 text-xs font-bold text-blue-500';
+                                        } else if (smartPrefixes.includes(prefix)) {
+                                            networkDisplay.textContent = 'Smart / TNT / Sun';
+                                            networkDisplay.className = 'mt-1 text-xs font-bold text-green-600';
+                                        } else {
+                                            networkDisplay.textContent = 'Unidentified SIM Card';
+                                            networkDisplay.className = 'mt-1 text-xs font-bold text-red-500';
+                                        }
+                                    } else {
+                                        networkDisplay.textContent = 'Philippine Mobile Number';
+                                        networkDisplay.className = 'mt-1 text-xs font-medium text-gray-400';
+                                    }
+                                } else {
+                                    networkDisplay.textContent = 'Unidentified SIM Card';
+                                    networkDisplay.className = 'mt-1 text-xs font-bold text-red-500';
+                                }
+                            } else if (raw.length === 1 && raw !== '0') {
+                                networkDisplay.textContent = 'Unidentified SIM Card';
+                                networkDisplay.className = 'mt-1 text-xs font-bold text-red-500';
+                            } else {
+                                networkDisplay.textContent = '';
+                            }
                         });
                     }
                 });

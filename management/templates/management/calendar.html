@@ -1,0 +1,129 @@
+{% extends 'management/base.html' %}
+{% load humanize %}
+
+{% block title %}Timeline | Kegama{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-white flex flex-col overflow-hidden">
+    
+    <!-- Ultra-Minimal Header -->
+    <header class="px-6 py-3 flex justify-between items-center border-b border-gray-50 bg-white z-30">
+        <div class="flex items-center gap-6">
+            <a href="{% url 'dashboard' %}" class="text-gray-300 hover:text-black transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            </a>
+            
+            <div class="flex items-center gap-3">
+                <h2 class="text-xs font-black uppercase tracking-[0.2em] text-black">{{ current_month|date:"F Y" }}</h2>
+                <div class="flex gap-0.5">
+                    <a href="?month={{ prev_month.month }}&year={{ prev_month.year }}" class="p-1 hover:bg-gray-50 rounded transition-colors">
+                        <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                    </a>
+                    <a href="?month={{ next_month.month }}&year={{ next_month.year }}" class="p-1 hover:bg-gray-50 rounded transition-colors">
+                        <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <div class="flex items-center gap-3">
+                <a href="{% url 'print_timeline' %}?month={{ current_month.month }}&year={{ current_month.year }}" target="_blank" 
+                   class="text-[10px] font-black uppercase tracking-widest text-gray-400 hover:text-black border border-gray-100 hover:border-black px-6 py-3 rounded-2xl transition-all">
+                    Export PDF
+                </a>
+                <a href="{% url 'new_booking' %}" 
+                   class="bg-black text-white text-[10px] font-black uppercase tracking-[0.2em] px-8 py-3.5 rounded-2xl hover:bg-orange-600 transition-all shadow-lg shadow-gray-200 active:scale-95">
+                    + New Booking
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Timeline Grid -->
+    <div class="flex-grow overflow-auto bg-white custom-scrollbar" style="overflow-x: auto; overflow-y: auto;">
+        <div class="inline-block min-w-full align-middle" style="overflow: visible;">
+            <table class="border-collapse table-fixed w-full" style="overflow: visible;">
+                <thead>
+                    <tr class="bg-white border-b border-gray-100">
+                        <th class="sticky left-0 z-30 bg-white border-r border-gray-50 px-4 py-3 w-24 text-left">
+                            <span class="text-[8px] font-black text-gray-200 uppercase tracking-[0.3em]">Room</span>
+                        </th>
+                        {% for day in days_range %}
+                        <th class="px-0.5 py-3 w-9 text-center border-r border-gray-50 transition-colors
+                                   {% if day == today %}bg-orange-50/50{% endif %}">
+                            <div class="text-[7px] font-bold uppercase tracking-tighter {% if day == today %}text-orange-600{% else %}text-gray-300{% endif %}">
+                                {{ day|date:"D"|slice:":1" }}
+                            </div>
+                            <div class="text-[10px] font-black {% if day == today %}text-orange-600{% else %}text-gray-900{% endif %}">
+                                {{ day.day }}
+                            </div>
+                        </th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody class="divide-y-0" style="overflow: visible;">
+                    {% for room in rooms %}
+                    <tr class="group transition-colors border-b border-gray-100" style="overflow: visible;"
+                        {% if room.status == 'AVAILABLE' %}bg-emerald-50/30{% elif room.status == 'OCCUPIED' %}bg-gray-50/50{% else %}bg-gray-100/50{% endif %}">
+                        
+                        <!-- Status-Colored Sticky Room Column -->
+                        <td class="sticky left-0 z-30 border-r border-b border-gray-100 px-4 py-2 transition-all
+                                   {% if room.is_occupied_today %}bg-black text-white{% elif room.status == 'MAINTENANCE' %}bg-gray-200 text-gray-500{% else %}bg-emerald-500 text-white{% endif %}">
+                            <span class="font-black text-xs tracking-tighter block">{{ room.number }}</span>
+                        </td>
+                        
+                        {% for day in days_range %}
+                        {% with is_first_day=forloop.first %}
+                        <td class="relative h-10 border-r border-b border-gray-100 p-0 group/cell transition-all" style="overflow: visible;">
+                            <!-- New Booking Hover Trigger -->
+                            <a href="{% url 'new_booking' %}?room={{ room.number }}&date={{ day|date:'Y-m-d' }}" 
+                               class="absolute inset-0 z-0 flex items-center justify-center opacity-0 group-hover/cell:opacity-100 transition-all bg-gray-50/50">
+                                <svg class="w-3 h-3 text-orange-500 scale-75 group-hover/cell:scale-100 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
+                            </a>
+
+                            <!-- Gantt Bars -->
+                            <div class="relative z-10 h-full w-full pointer-events-none" style="overflow: visible;">
+                                {% for r_num, guests in booking_map.items %}
+                                    {% if r_num == room.number %}
+                                        {% for g in guests %}
+                                            {% if g.check_in_date <= day and day <= g.end_night %}
+                                                <!-- Bar Segment -->
+                                                <div class="absolute inset-y-0 left-0 right-0 py-1.5 transition-all
+                                                   {% if g.status == 'PENDING' %}bg-yellow-400 border-yellow-500{% else %}bg-black border-black{% endif %}
+                                                   {% if g.check_in_date == day %}rounded-l-md ml-1 border-l border-y z-20{% else %}border-y z-10{% endif %}
+                                                   {% if g.end_night == day %}rounded-r-md mr-1 border-r{% endif %}"
+                                                   style="overflow: visible;">
+                                                    
+                                                    {% if g.check_in_date == day or is_first_day and g.check_in_date < day %}
+                                                        <a href="{% url 'update_guest' g.id %}" 
+                                                           class="absolute left-3 inset-y-0 flex items-center z-[60] pointer-events-auto text-[9px] font-black uppercase tracking-widest whitespace-nowrap 
+                                                           {% if g.status == 'PENDING' %}text-yellow-950{% else %}text-white{% endif %}"
+                                                           style="text-shadow: 0 0 4px rgba(0,0,0,0.2);">
+                                                            {{ g.last_name }}
+                                                        </a>
+                                                    {% endif %}
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                        </td>
+                        {% endwith %}
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #f1f1f1; border-radius: 10px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #e5e5e5; }
+</style>
+{% endblock %}

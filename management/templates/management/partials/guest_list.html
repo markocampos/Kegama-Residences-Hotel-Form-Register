@@ -1,40 +1,77 @@
 {% load humanize %}
-            {% for guest in guests %}
-            <div class="p-4 border-b border-gray-100 last:border-b-0 hover:bg-gray-50 transition-colors animate-fade-in">
-                <div class="flex justify-between items-start">
-                    <div>
-                                        <div class="flex items-center gap-2 mb-1">
-                                            <h3 class="font-bold text-gray-900 uppercase text-lg">{{ guest.last_name }}, {{ guest.first_name }}</h3>
-                                            {% if guest.status == 'PENDING' %}
-                                                <span class="bg-yellow-100 text-yellow-800 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full tracking-wide">Pending</span>
-                                            {% elif guest.status == 'PRINTED' %}
-                                                {% now "Y-m-d" as current_date %}
-                                                {% if guest.check_out_date|date:"Y-m-d" < current_date %}
-                                                     <span class="bg-red-100 text-red-800 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full tracking-wide flex items-center gap-1">
-                                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                                        DUE-OUT
-                                                     </span>
-                                                {% else %}
-                                                     <span class="bg-green-100 text-green-800 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full tracking-wide">Active</span>
-                                                {% endif %}
-                                            {% endif %}
-                                        </div>                        <p class="text-sm text-gray-500 mt-1">Room: <span class="font-medium text-gray-700">{{ guest.room_number|default:"--" }}</span> • {{ guest.nights }} Night(s)</p>
-                        <p class="text-xs text-gray-400 mt-1 flex items-center gap-1">
-                            <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            {{ guest.created_at|naturaltime }}
-                        </p>
+
+{% if search_query %}
+    <div class="p-4 bg-orange-50 border-b border-orange-100 text-orange-700 text-sm font-medium flex justify-between items-center">
+        <span>Search results for: "<b>{{ search_query }}</b>"</span>
+        <a href="{% url 'dashboard' %}" class="text-orange-600 hover:text-orange-800 underline text-xs">Clear Search</a>
+    </div>
+{% endif %}
+
+{% for month_year, guests in grouped_guests.items %}
+<div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-4" x-data="{ expanded: {% if forloop.first %}true{% else %}false{% endif %} }">
+    <!-- Folder Header -->
+    <button @click="expanded = !expanded" class="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 flex justify-between items-center transition-colors border-b border-gray-100">
+        <div class="flex items-center gap-2">
+            <!-- Icon -->
+            <svg class="w-5 h-5 text-orange-600 transition-transform duration-200" :class="expanded ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+            
+            <h3 class="font-bold text-gray-700 text-sm uppercase tracking-wide">{{ month_year }}</h3>
+            <span class="bg-gray-200 text-gray-600 text-[10px] font-bold px-2 py-0.5 rounded-full">{{ guests|length }} Guests</span>
+        </div>
+        <div class="text-xs text-gray-400 font-medium" x-show="!expanded">Click to view</div>
+        <div class="text-xs text-gray-400 font-medium" x-show="expanded">Viewing</div>
+    </button>
+
+    <!-- Guest Items (Collapsible) -->
+    <div x-show="expanded" x-collapse class="divide-y divide-gray-100">
+        {% for guest in guests %}
+        <a href="{% url 'update_guest' guest.id %}" class="block p-4 hover:bg-orange-50/30 transition-colors group">
+            <div class="flex justify-between items-start">
+                <div>
+                    <div class="flex items-center gap-2 mb-1">
+                        <h3 class="font-bold text-gray-900 uppercase text-base group-hover:text-orange-700 transition-colors">{{ guest.last_name }}, {{ guest.first_name }}</h3>
+                        {% if guest.status == 'PENDING' %}
+                            <span class="bg-yellow-100 text-yellow-800 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full tracking-wide">Pending</span>
+                        {% elif guest.status == 'PRINTED' %}
+                            {% now "Y-m-d" as current_date %}
+                            {% if guest.check_in_date|date:"Y-m-d" > current_date %}
+                                    <span class="bg-blue-100 text-blue-800 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full tracking-wide">Advance</span>
+                            {% elif guest.check_out_date|date:"Y-m-d" < current_date %}
+                                    <span class="bg-red-100 text-red-800 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full tracking-wide flex items-center gap-1">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    DUE-OUT
+                                    </span>
+                            {% else %}
+                                    <span class="bg-green-100 text-green-800 text-[10px] font-bold uppercase px-2 py-0.5 rounded-full tracking-wide">Active</span>
+                            {% endif %}
+                        {% endif %}
                     </div>
-                    
-                    <a href="{% url 'update_guest' guest.id %}" class="text-white bg-orange-600 hover:bg-orange-700 focus:ring-4 focus:ring-orange-300 font-medium rounded-lg text-xs px-4 py-2 focus:outline-none flex items-center gap-1 shadow-sm whitespace-nowrap">
-                        <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <path stroke="currentColor" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        CHECK DETAILS
-                    </a>
+                    <div class="flex gap-4 text-xs text-gray-500 mt-1">
+                        <span class="flex items-center gap-1">
+                            <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-9v9a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                            Room <span class="font-bold text-gray-700">{{ guest.room_number|default:"--" }}</span>
+                        </span>
+                        <span class="flex items-center gap-1">
+                            <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                            {{ guest.check_in_date|date:"M d" }} - {{ guest.check_out_date|date:"M d" }}
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="text-white bg-gray-800 group-hover:bg-orange-600 font-medium rounded-lg text-xs px-3 py-2 flex items-center gap-1 shadow-sm whitespace-nowrap transition-all opacity-0 group-hover:opacity-100">
+                    DETAILS &rarr;
                 </div>
             </div>
-            {% empty %}
-            <div class="p-8 text-center text-gray-500">
-                No registrations found today.
-            </div>
-            {% endfor %}
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% empty %}
+<div class="p-12 text-center">
+    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+        <svg class="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+    </div>
+    <h3 class="text-lg font-bold text-gray-900 mb-1">No registrations found</h3>
+    <p class="text-gray-500 text-sm">There are no guests matching your criteria.</p>
+</div>
+{% endfor %}

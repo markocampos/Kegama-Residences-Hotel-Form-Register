@@ -1,5 +1,6 @@
 import uuid
 from django.db import models
+from django.core.validators import MinValueValidator
 
 class AuditLog(models.Model):
     ACTION_CHOICES = [
@@ -33,6 +34,7 @@ class GuestRegistration(models.Model):
         ('PENDING', 'Pending'),
         ('PRINTED', 'Printed'),
         ('CHECKED_IN', 'Checked-in'),
+        ('CHECKED_OUT', 'Checked-out'),
     ]
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -48,11 +50,13 @@ class GuestRegistration(models.Model):
     address = models.CharField(max_length=255)
     phone = models.CharField(max_length=20)
     email = models.EmailField()
+    car_plate = models.CharField(max_length=20, blank=True, null=True, help_text="Optional Car Plate Number")
     birth_date = models.DateField(blank=True, null=True)
     gender = models.CharField(max_length=20, blank=True)
 
     pax = models.IntegerField(default=1)
-    nights = models.IntegerField(default=1)
+    nights = models.IntegerField(default=1, validators=[MinValueValidator(1)])
+    stay_duration = models.CharField(max_length=20, blank=True, help_text="Duration label (e.g. 6 Hrs)")
     room_number = models.CharField(max_length=20, blank=True)
     room_rate = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     
@@ -87,6 +91,15 @@ class AdminSettings(models.Model):
     pin_code = models.CharField(max_length=10, default='12345', help_text="PIN for Management Access")
     maintenance_mode = models.BooleanField(default=False, help_text="Disable guest form")
     form_access_code = models.CharField(max_length=20, blank=True, help_text="Optional code required to view form")
+    policy_text = models.TextField(default="""Check-in Time: 02:00 PM
+Check-out Time: 12:00 NN
+
+- Early check-in/late check-out subject to availability.
+- Premium Business privilege guests have flexible check-in.
+- Full room rate chargeable for check-in before 07:00 AM.
+- Changes in reservation may require rate changes.
+- Valid ID required for all guests.
+- Guests under 18 must be accompanied by a parent/guardian.""", help_text="Reservation Policy displayed on PDF")
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -119,6 +132,8 @@ class Room(models.Model):
     number = models.CharField(max_length=10, primary_key=True)
     floor = models.CharField(max_length=50)
     price = models.DecimalField(max_digits=10, decimal_places=0) # Integer price
+    price_6hr = models.DecimalField(max_digits=10, decimal_places=0, default=0)
+    price_10hr = models.DecimalField(max_digits=10, decimal_places=0, default=0)
     capacity = models.IntegerField(default=2, help_text="Max Pax")
     status = models.CharField(max_length=20, default='AVAILABLE', choices=[('AVAILABLE', 'Available'), ('OCCUPIED', 'Occupied'), ('MAINTENANCE', 'Maintenance')])
     
