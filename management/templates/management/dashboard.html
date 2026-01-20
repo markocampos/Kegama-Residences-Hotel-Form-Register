@@ -129,7 +129,11 @@
             </div>
         </div>
 
-        <div id="guest-list" class="bg-transparent space-y-4">
+        <div id="guest-list" 
+             class="bg-transparent space-y-4"
+             hx-get="{% url 'dashboard' %}" 
+             hx-trigger="every 10s" 
+             hx-include="[name='q']">
             {% include 'management/partials/guest_list.html' %}
         </div>
 

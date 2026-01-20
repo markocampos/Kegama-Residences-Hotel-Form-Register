@@ -296,7 +296,7 @@
                                 month: '{{ guest.birth_date|date:'m' }}',
                                 year: '{{ guest.birth_date|date:'Y' }}',
                                 get date() {
-                                    if (this.day && this.month && this.year) {
+                                    if (this.day && this.month && this.year && this.year.length === 4) {
                                         return `${this.year}-${this.month}-${this.day.toString().padStart(2, '0')}`;
                                     }
                                     return '';

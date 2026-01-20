@@ -121,7 +121,11 @@ def submit_guest_form(request):
         notes=data.get('notes', '')
     )
     
-    response = render(request, 'management/submission_success.html')
+    if request.headers.get('HX-Request'):
+        response = render(request, 'management/partials/success_page_content.html')
+    else:
+        response = render(request, 'management/submission_success.html')
+    
     response.set_signed_cookie('kegama_guest_id', str(guest.id), max_age=60*60*24*90) 
     return response
 

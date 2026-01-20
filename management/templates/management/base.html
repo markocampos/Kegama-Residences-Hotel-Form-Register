@@ -112,29 +112,49 @@
     </div>
 
     <script>
-        let deferredPrompt;
-        const installBanner = document.getElementById('install-banner');
-        const installBtn = document.getElementById('install-btn');
-        const dismissBtn = document.getElementById('dismiss-install');
+        // PWA Install Logic - HTMX Compatible
+        window.deferredPrompt = window.deferredPrompt || null;
 
-        window.addEventListener('beforeinstallprompt', (e) => {
+        // Define handler globally so we can remove/re-add it cleanly
+        window.handleInstallPrompt = function(e) {
             e.preventDefault();
-            deferredPrompt = e;
-            installBanner.classList.remove('hidden');
-        });
+            window.deferredPrompt = e;
+            var banner = document.getElementById('install-banner');
+            if (banner) banner.classList.remove('hidden');
+        };
 
-        installBtn.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                deferredPrompt = null;
-                installBanner.classList.add('hidden');
+        // Prevent duplicate listeners on window
+        window.removeEventListener('beforeinstallprompt', window.handleInstallPrompt);
+        window.addEventListener('beforeinstallprompt', window.handleInstallPrompt);
+
+        // Run UI logic for the current DOM
+        (function() {
+            var installBanner = document.getElementById('install-banner');
+            var installBtn = document.getElementById('install-btn');
+            var dismissBtn = document.getElementById('dismiss-install');
+
+            // If we already have a prompt saved from before (e.g. before HTMX swap), show banner
+            if (window.deferredPrompt && installBanner) {
+                installBanner.classList.remove('hidden');
             }
-        });
 
-        dismissBtn.addEventListener('click', () => {
-            installBanner.classList.add('hidden');
-        });
+            if (installBtn) {
+                installBtn.addEventListener('click', async () => {
+                    if (window.deferredPrompt) {
+                        window.deferredPrompt.prompt();
+                        const { outcome } = await window.deferredPrompt.userChoice;
+                        window.deferredPrompt = null;
+                        if (installBanner) installBanner.classList.add('hidden');
+                    }
+                });
+            }
+
+            if (dismissBtn) {
+                dismissBtn.addEventListener('click', () => {
+                    if (installBanner) installBanner.classList.add('hidden');
+                });
+            }
+        })();
     </script>
 
     <script src="{% static 'js/flowbite.js' %}"></script>
