@@ -42,6 +42,8 @@
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
 
+    {% block header %}{% endblock %}
+
     <main class="flex-grow">
         {% block content %}
         {% endblock %}

@@ -13,7 +13,7 @@
                 <span class="font-bold text-sm">Dashboard</span>
             </a>
             <div class="h-4 w-[1px] bg-gray-200"></div>
-            <span class="font-black text-lg tracking-tighter text-gray-900 uppercase">Room Status Rack</span>
+            <span class="font-bold text-lg tracking-tight text-gray-900 uppercase">Room Status Rack</span>
             <button onclick="toggleRackGuide()" class="ml-2 text-xs font-bold text-orange-600 border border-orange-200 bg-orange-50 hover:bg-orange-100 px-2 py-1 rounded-md flex items-center gap-1 transition-colors">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 Guide
@@ -24,15 +24,19 @@
         <div class="hidden md:flex items-center gap-6">
             <div class="flex items-center gap-2">
                 <div class="w-3 h-3 bg-green-500 rounded-full shadow-sm shadow-green-200"></div>
-                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Available</span>
+                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Available</span>
             </div>
             <div class="flex items-center gap-2">
                 <div class="w-3 h-3 bg-yellow-400 rounded-full shadow-sm shadow-yellow-200 animate-pulse"></div>
-                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Pending</span>
+                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Pending</span>
             </div>
             <div class="flex items-center gap-2">
                 <div class="w-3 h-3 bg-red-500 rounded-full shadow-sm shadow-red-200"></div>
-                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">Occupied</span>
+                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Occupied</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <div class="w-3 h-3 bg-gray-500 rounded-full shadow-sm shadow-gray-200"></div>
+                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Dirty</span>
             </div>
         </div>
     </nav>
@@ -41,7 +45,7 @@
         
         {% for floor, rooms in rack_data.items %}
         <div class="space-y-6">
-            <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] pl-2 flex items-center gap-2">
+            <h3 class="text-[10px] font-bold text-gray-400 uppercase tracking-[0.3em] pl-2 flex items-center gap-2">
                 <span class="w-2 h-2 bg-orange-500 rounded-full"></span>
                 {{ floor }}
                 <span class="text-[9px] bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full tracking-normal ml-2">{{ rooms|length }} Rooms</span>
@@ -51,29 +55,32 @@
                 {% for room in rooms %}
                     {% if room.status == 'AVAILABLE' %}
                         <!-- AVAILABLE CARD -->
-                        <div class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between h-40 hover:shadow-xl hover:shadow-green-500/5 transition-all group relative overflow-hidden">
+                        <a href="{% url 'new_booking' %}?room={{ room.id }}" class="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 flex flex-col justify-between h-40 hover:shadow-xl hover:shadow-green-500/5 transition-all group relative overflow-hidden">
                             <div class="absolute -top-4 -right-4 w-16 h-16 bg-green-50 rounded-full transition-transform group-hover:scale-150 duration-500"></div>
                             <div class="relative z-10">
-                                <span class="text-[10px] font-black text-green-600 uppercase tracking-widest">Free</span>
+                                <span class="text-[10px] font-bold text-green-600 uppercase tracking-widest">Free</span>
                                 <h4 class="text-3xl font-black text-gray-900 mt-1">{{ room.id }}</h4>
                             </div>
                             <div class="relative z-10 flex items-center justify-between">
-                                <span class="text-xs font-black text-gray-400 tracking-tighter">₱{{ room.price|intcomma }}</span>
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-bold text-gray-400 tracking-tighter">₱{{ room.price|intcomma }}</span>
+                                    <span class="text-[8px] font-bold text-orange-600 uppercase tracking-widest mt-1 opacity-0 group-hover:opacity-100 transition-opacity">+ Book Now</span>
+                                </div>
                                 <div class="w-2 h-2 bg-green-500 rounded-full"></div>
                             </div>
-                        </div>
+                        </a>
 
                     {% elif room.status == 'PENDING' and room.guest_id %}
                         <!-- PENDING CARD -->
                         <a href="{% url 'update_guest' room.guest_id %}" class="bg-white rounded-3xl shadow-sm border-2 border-yellow-100 p-6 flex flex-col justify-between h-40 hover:shadow-xl hover:shadow-yellow-500/10 transition-all group relative overflow-hidden">
                             <div class="absolute -top-4 -right-4 w-16 h-16 bg-yellow-50 rounded-full animate-pulse transition-transform group-hover:scale-150 duration-500"></div>
                             <div class="relative z-10">
-                                <span class="text-[10px] font-black text-yellow-600 uppercase tracking-widest">Verifying</span>
+                                <span class="text-[10px] font-bold text-yellow-600 uppercase tracking-widest">Verifying</span>
                                 <h4 class="text-3xl font-black text-gray-900 mt-1">{{ room.id }}</h4>
-                                <p class="text-[10px] font-bold text-gray-500 truncate mt-2">{{ room.guest_name|upper }}</p>
+                                <p class="text-[10px] font-bold text-gray-500 truncate mt-2">{{ room.guest_name|title }}</p>
                             </div>
                             <div class="relative z-10 flex items-center justify-between">
-                                <span class="text-[9px] font-black text-yellow-600 tracking-widest uppercase">Click to verify</span>
+                                <span class="text-[9px] font-bold text-yellow-600 tracking-widest uppercase">Click to verify</span>
                                 <div class="w-2 h-2 bg-yellow-400 rounded-full animate-pulse"></div>
                             </div>
                         </a>
@@ -84,12 +91,12 @@
                             <a href="{% url 'update_guest' room.guest_id %}" class="bg-blue-50 rounded-3xl shadow-sm border border-blue-100 p-6 flex flex-col justify-between h-40 hover:shadow-lg hover:shadow-blue-500/10 transition-all group relative overflow-hidden">
                                 <div class="absolute -top-4 -right-4 w-16 h-16 bg-blue-100/50 rounded-full transition-transform group-hover:scale-150 duration-500"></div>
                                 <div class="relative z-10">
-                                    <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest">Advance</span>
+                                    <span class="text-[10px] font-bold text-blue-600 uppercase tracking-widest">Advance</span>
                                     <h4 class="text-3xl font-black text-gray-900 mt-1">{{ room.id }}</h4>
-                                    <p class="text-[10px] font-bold text-gray-500 truncate mt-2">{{ room.guest_name|upper }}</p>
+                                    <p class="text-[10px] font-bold text-gray-500 truncate mt-2">{{ room.guest_name|title }}</p>
                                 </div>
                                 <div class="relative z-10 flex items-center justify-between">
-                                    <span class="text-[9px] font-black text-blue-500 tracking-widest uppercase">View Booking &rarr;</span>
+                                    <span class="text-[9px] font-bold text-blue-500 tracking-widest uppercase">View Booking &rarr;</span>
                                     <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
                                 </div>
                             </a>
@@ -98,22 +105,42 @@
                             <a href="{% url 'update_guest' room.guest_id %}" class="bg-gray-900 rounded-3xl shadow-lg p-6 flex flex-col justify-between h-40 hover:bg-black transition-all group relative overflow-hidden">
                                 <div class="absolute -top-4 -right-4 w-16 h-16 bg-white/5 rounded-full transition-transform group-hover:scale-150 duration-500"></div>
                                 <div class="relative z-10">
-                                    <span class="text-[10px] font-black text-red-400 uppercase tracking-widest">In Stay</span>
+                                    <span class="text-[10px] font-bold text-red-400 uppercase tracking-widest">In Stay</span>
                                     <h4 class="text-3xl font-black text-white mt-1">{{ room.id }}</h4>
-                                    <p class="text-[10px] font-bold text-gray-400 truncate mt-2">{{ room.guest_name|upper }}</p>
+                                    <p class="text-[10px] font-bold text-gray-400 truncate mt-2">{{ room.guest_name|title }}</p>
                                 </div>
                                 <div class="relative z-10 flex items-center justify-between">
-                                    <span class="text-[9px] font-black text-red-400 tracking-widest uppercase">Check Details &rarr;</span>
+                                    <span class="text-[9px] font-bold text-red-400 tracking-widest uppercase">Check Details &rarr;</span>
                                     <div class="w-2 h-2 bg-red-500 rounded-full shadow-sm shadow-red-500/50"></div>
                                 </div>
                             </a>
                         {% endif %}
                     
+                    {% elif room.status == 'DIRTY' %}
+                        <!-- DIRTY CARD -->
+                        <div class="bg-gray-800 rounded-3xl shadow-sm border border-gray-700 p-6 flex flex-col justify-between h-40 hover:shadow-xl hover:shadow-gray-500/20 transition-all group relative overflow-hidden">
+                            <div class="absolute -top-4 -right-4 w-16 h-16 bg-gray-700 rounded-full transition-transform group-hover:scale-150 duration-500"></div>
+                            <div class="relative z-10">
+                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Cleaning</span>
+                                <h4 class="text-3xl font-black text-white mt-1">{{ room.id }}</h4>
+                            </div>
+                            <div class="relative z-10">
+                                <form action="{% url 'mark_room_clean' %}" method="POST">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="room_id" value="{{ room.id }}">
+                                    <button type="submit" class="w-full text-center text-[9px] font-bold text-white bg-gray-700 hover:bg-green-500 hover:text-white py-2 rounded-xl transition-colors uppercase tracking-widest flex items-center justify-center gap-2">
+                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                                        Mark Clean
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
                     {% else %}
                         <!-- MAINTENANCE/OTHER -->
                         <div class="bg-white opacity-60 rounded-3xl border border-gray-200 p-6 flex flex-col justify-between h-40 relative grayscale">
                             <div>
-                                <span class="text-[10px] font-black text-gray-400 uppercase tracking-widest">{{ room.status }}</span>
+                                <span class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{{ room.status }}</span>
                                 <h4 class="text-3xl font-black text-gray-400 mt-1">{{ room.id }}</h4>
                             </div>
                             <div class="flex items-center justify-between">

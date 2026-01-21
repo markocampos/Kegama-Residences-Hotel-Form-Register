@@ -306,7 +306,7 @@ def update_guest(request, guest_id):
                     else:
                         Room.objects.filter(number=new_room_number).update(status='AVAILABLE')
                 elif guest.status == 'CHECKED_OUT':
-                    Room.objects.filter(number=new_room_number).update(status='AVAILABLE')
+                    Room.objects.filter(number=new_room_number).update(status='DIRTY')
 
             log_action(request, 'UPDATE_GUEST', f"Updated info for {guest.first_name} {guest.last_name} ({guest.status})")
 
@@ -576,28 +576,47 @@ def room_rack(request):
         'rack_data': rack_data
     })
 
+@require_POST
+def mark_room_clean(request):
+    if not request.session.get('is_manager'):
+        return redirect('admin_login')
+        
+    room_id = request.POST.get('room_id')
+    try:
+        room = Room.objects.get(number=room_id)
+        if room.status == 'DIRTY':
+            room.status = 'AVAILABLE'
+            room.save()
+            log_action(request, 'HOUSEKEEPING', f"Marked Room {room_id} as Clean")
+    except Room.DoesNotExist:
+        pass
+        
+    return redirect(request.META.get('HTTP_REFERER', 'room_rack'))
+
 def room_management(request):
     if not request.session.get('is_manager'):
         return redirect('admin_login')
     
     if request.method == 'POST':
-        room_id = request.POST.get('room_id')
-        price_raw = request.POST.get('price', '0').replace(',', '')
-        price = float(price_raw or 0)
-        capacity = request.POST.get('capacity')
-        status = request.POST.get('status')
+        rooms = Room.objects.all()
+        updated_count = 0
         
-        try:
-            room = Room.objects.get(number=room_id)
-            room.price = price
-            room.price_6hr = float(request.POST.get('price_6hr', '0').replace(',', '') or 0)
-            room.price_10hr = float(request.POST.get('price_10hr', '0').replace(',', '') or 0)
-            room.capacity = capacity
-            room.status = status
-            room.save()
-            log_action(request, 'UPDATE_ROOM', f"Updated Room {room_id}")
-        except Room.DoesNotExist:
-            pass
+        for room in rooms:
+            rid = room.number
+            if f'price_{rid}' in request.POST:
+                try:
+                    room.price = float(request.POST.get(f'price_{rid}', '0').replace(',', '') or 0)
+                    room.price_6hr = float(request.POST.get(f'price_6hr_{rid}', '0').replace(',', '') or 0)
+                    room.price_10hr = float(request.POST.get(f'price_10hr_{rid}', '0').replace(',', '') or 0)
+                    room.capacity = int(request.POST.get(f'capacity_{rid}', 1))
+                    room.status = request.POST.get(f'status_{rid}', room.status)
+                    room.save()
+                    updated_count += 1
+                except ValueError:
+                    continue
+        
+        if updated_count > 0:
+            log_action(request, 'UPDATE_ROOMS', f"Bulk updated {updated_count} rooms")
         
         return redirect('room_management')
 
@@ -646,10 +665,15 @@ def calendar_view(request):
         if guest.room_number not in booking_map:
             booking_map[guest.room_number] = []
         
-        if guest.check_in_date == guest.check_out_date:
-            last_night = guest.check_in_date
+        is_nightly = '22' in str(guest.stay_duration)
+        
+        if is_nightly:
+            last_night = guest.check_out_date
         else:
-            last_night = guest.check_out_date - timedelta(days=1)
+            if guest.check_in_date == guest.check_out_date:
+                last_night = guest.check_in_date
+            else:
+                last_night = guest.check_out_date - timedelta(days=1)
         
         guest.start_date = guest.check_in_date
         guest.end_night = last_night
@@ -659,6 +683,7 @@ def calendar_view(request):
         room.is_occupied_today = False
         if room.number in booking_map:
             for g in booking_map[room.number]:
+                # Room is occupied if today is within the range [check_in, check_out]
                 if g.check_in_date <= today and today <= g.end_night:
                     room.is_occupied_today = True
                     break
@@ -697,6 +722,19 @@ def print_timeline(request):
     for guest in guests:
         if guest.room_number not in booking_map:
             booking_map[guest.room_number] = []
+        
+        is_nightly = '22' in str(guest.stay_duration)
+        
+        if is_nightly:
+            last_night = guest.check_out_date
+        else:
+            if guest.check_in_date == guest.check_out_date:
+                last_night = guest.check_in_date
+            else:
+                last_night = guest.check_out_date - timedelta(days=1)
+        
+        guest.start_date = guest.check_in_date
+        guest.end_night = last_night
         booking_map[guest.room_number].append(guest)
 
     html_string = render_to_string('pdf/timeline_report.html', {
@@ -731,6 +769,78 @@ def new_booking(request):
         nights=1
     )
     return redirect('update_guest', guest_id=guest.id)
+
+def guest_lookup_page(request):
+    if not request.session.get('is_manager'):
+        return redirect('admin_login')
+    return render(request, 'management/guest_lookup.html')
+
+def clone_guest(request, guest_id):
+    if not request.session.get('is_manager'):
+        return redirect('admin_login')
+        
+    source_guest = get_object_or_404(GuestRegistration, id=guest_id)
+    
+    new_guest = GuestRegistration.objects.create(
+        first_name=source_guest.first_name,
+        last_name=source_guest.last_name,
+        address=source_guest.address,
+        phone=source_guest.phone,
+        email=source_guest.email,
+        car_plate=source_guest.car_plate,
+        birth_date=source_guest.birth_date,
+        gender=source_guest.gender,
+        status='PENDING',
+        nights=1,
+        pax=1
+    )
+    
+    log_action(request, 'CLONE_GUEST', f"Cloned guest {source_guest.first_name} {source_guest.last_name}")
+    return redirect('update_guest', guest_id=new_guest.id)
+
+def search_guests(request):
+    if not request.session.get('is_manager'):
+        return HttpResponse("", status=403)
+        
+    query = request.GET.get('q', '').strip()
+    if len(query) < 2:
+        return HttpResponse("")
+        
+    guests = GuestRegistration.objects.filter(
+        Q(first_name__icontains=query) | 
+        Q(last_name__icontains=query) |
+        Q(phone__icontains=query)
+    ).values('id', 'first_name', 'last_name', 'phone', 'address', 'created_at').order_by('-created_at')[:10]
+    
+    seen = set()
+    unique_guests = []
+    for g in guests:
+        key = (g['first_name'], g['last_name'], g['phone'])
+        if key not in seen:
+            seen.add(key)
+            unique_guests.append(g)
+    
+    if not unique_guests:
+        return HttpResponse('<div class="p-6 text-center text-xs font-bold text-gray-400 uppercase tracking-widest bg-white rounded-xl border border-dashed border-gray-200">No guests found</div>')
+        
+    html = ""
+    for g in unique_guests:
+        clone_url = reverse('clone_guest', args=[g['id']])
+        html += f"""
+        <a href="{clone_url}" class="block bg-white p-4 rounded-xl border border-gray-100 shadow-sm hover:shadow-md hover:border-orange-200 transition-all group">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h3 class="font-black text-sm text-gray-900 uppercase group-hover:text-orange-600 transition-colors">{g['first_name']} {g['last_name']}</h3>
+                    <p class="text-[10px] font-bold text-gray-400 mt-1">{g['address']}</p>
+                </div>
+                <div class="text-right">
+                    <div class="text-[10px] font-mono font-bold text-gray-500">{g['phone']}</div>
+                    <span class="text-[9px] font-bold text-orange-500 uppercase tracking-wider opacity-0 group-hover:opacity-100 transition-opacity">Select &rarr;</span>
+                </div>
+            </div>
+        </a>
+        """
+    return HttpResponse(html)
 
 def generate_guest_pdf(request, guest_id):
     if not request.session.get('is_manager'):

@@ -13,29 +13,46 @@
         body {
             font-family: "Helvetica", "Arial", sans-serif; 
             font-size: 8px;
-            color: #000;
+            color: #111;
             line-height: 1.1;
         }
 
-        .header {
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #f3f4f6;
+            padding-bottom: 15px;
             margin-bottom: 20px;
-            border-bottom: 1px solid #000;
-            padding-bottom: 10px;
+        }
+
+        .logo {
+            height: 25px;
+            width: auto;
+            opacity: 0.8;
+        }
+
+        .title-block {
+            text-align: right;
         }
 
         h1 {
-            font-size: 14px;
+            font-size: 32px; /* Matching Web Calendar Big Title */
             font-weight: 900;
             margin: 0;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: -1px;
+            color: #000;
+            line-height: 1;
         }
 
         .meta {
-            font-size: 7px;
-            color: #666;
+            font-size: 8px;
+            color: #9ca3af;
             margin-top: 4px;
             text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: 700;
         }
 
         table {
@@ -45,99 +62,144 @@
         }
 
         th, td {
-            border: 0.2px solid #ddd;
-            padding: 0; /* Remove padding for seamless bars */
+            border-right: 0.5px solid #f3f4f6;
+            border-bottom: 0.5px solid #f3f4f6;
+            padding: 0;
             text-align: center;
             height: 24px;
             vertical-align: middle;
-            position: relative; /* Base for absolute positioning */
+            position: relative;
         }
 
-        .room-col {
-            width: 45px;
+        /* Web-like Header */
+        .room-col-header {
+            width: 50px;
             text-align: left;
-            padding-left: 6px !important;
+            padding-left: 8px;
             font-weight: 900;
-            background-color: #fff;
-            border-right: 1px solid #000;
-            font-size: 9px;
-            position: sticky;
-            left: 0;
-            z-index: 100;
+            font-size: 8px;
+            color: #d1d5db; /* gray-300 */
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-bottom: 1px solid #e5e7eb;
         }
 
         .day-header {
-            width: 22px;
-            background-color: #fcfcfc;
-            font-size: 7px;
+            width: 24px;
             padding: 4px 0 !important;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .day-name {
+            font-size: 7px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #d1d5db; /* gray-300 */
+        }
+        
+        .day-num {
+            font-size: 10px;
+            font-weight: 900;
+            color: #111827; /* gray-900 */
+        }
+        
+        .day-header.today .day-name, 
+        .day-header.today .day-num {
+            color: #ea580c; /* orange-600 */
+        }
+        .day-header.today {
+            background-color: #fff7ed; /* orange-50 */
         }
 
+        /* Web-like Room Column */
+        .room-col {
+            width: 50px;
+            text-align: left;
+            padding-left: 10px;
+            font-weight: 900;
+            font-size: 10px;
+            color: #000;
+            background-color: #fff;
+            border-right: 1px solid #e5e7eb;
+        }
+
+        /* Booking Bars matching Web Style */
         .stay-bar {
-            background-color: #000;
+            background-color: #000; /* Black for Confirmed */
             color: #fff;
             font-size: 6px;
-            font-weight: 900;
+            font-weight: 700;
             height: 16px; 
             margin: 4px 0;
             display: block;
             width: 100%;
             position: relative;
+            border-top: 0.5px solid #000;
+            border-bottom: 0.5px solid #000;
         }
 
         .stay-bar-pending {
-            background-color: #fbbf24; /* Yellow 400 */
-            color: #000;
+            background-color: #facc15; /* Yellow-400 equivalent */
+            border-color: #eab308; /* Yellow-500 equivalent */
+            color: #422006; /* Yellow-950 equivalent */
         }
 
         .bar-start {
+            margin-left: 2px;
+            border-left: 0.5px solid;
             border-top-left-radius: 4px;
             border-bottom-left-radius: 4px;
-            margin-left: 2px;
-            width: auto;
-            margin-right: 0;
+        }
+        
+        .bar-end {
+            margin-right: 2px;
+            border-right: 0.5px solid;
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
         }
 
         .guest-name-label {
             position: absolute;
-            left: 6px;
+            left: 4px;
             top: 50%;
             transform: translateY(-50%);
             white-space: nowrap;
             z-index: 50;
-            pointer-events: none;
-            text-shadow: 0 0 2px rgba(0,0,0,0.2);
-        }
-
-        .bar-start .guest-name-label {
-            display: block;
+            overflow: visible;
+            max-width: none;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 900;
+            color: #ea580c; /* Orange for visibility on both dark/light */
         }
 
         .footer {
-            margin-top: 40px;
+            margin-top: 30px;
             text-align: center;
-            font-size: 7px;
-            color: #bbb;
+            font-size: 6px;
+            color: #d1d5db;
             text-transform: uppercase;
             letter-spacing: 2px;
-            border-top: 0.5px solid #eee;
-            padding-top: 15px;
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Occupancy Timeline: {{ current_month|date:"F Y" }}</h1>
-        <div class="meta">Kegama Residences &bull; CONFIDENTIAL &bull; Generated: {{ generated_at|date:"M d, Y H:i" }}</div>
+    <div class="header-container">
+        <img src="file://{{ base_dir }}/static/images/logo.png" class="logo" alt="Kegama Logo">
+        <div class="title-block">
+            <h1>{{ current_month|date:"F Y" }}</h1>
+            <div class="meta">Generated: {{ generated_at|date:"M d, H:i" }}</div>
+        </div>
     </div>
 
     <table>
         <thead>
             <tr>
-                <th class="room-col">ROOM</th>
+                <th class="room-col-header">Room</th>
                 {% for day in days_range %}
-                <th class="day-header" style="{% if day == today %}background-color: #fff7ed; color: #ea580c;{% endif %}">
-                    {{ day|date:"D"|slice:":1" }}<br>{{ day.day }}
+                <th class="day-header {% if day == today %}today{% endif %}">
+                    <div class="day-name">{{ day|date:"D"|slice:":1" }}</div>
+                    <div class="day-num">{{ day.day }}</div>
                 </th>
                 {% endfor %}
             </tr>
@@ -147,18 +209,18 @@
             <tr>
                 <td class="room-col">
                     {{ room.number }}
-                    <div style="font-size: 5px; color: #aaa; font-weight: normal;">FLR {{ room.floor|upper|cut:"FLOOR" }}</div>
                 </td>
                 {% for day in days_range %}
-                <td style="{% if day == today %}background-color: #fffaf0;{% endif %}">
+                <td>
                     {% for r_num, guests in booking_map.items %}
                         {% if r_num == room.number %}
                             {% for g in guests %}
-                                {% if g.check_in_date <= day and day < g.check_out_date %}
+                                {% if g.check_in_date <= day and day <= g.end_night %}
                                     <div class="stay-bar {% if g.status == 'PENDING' %}stay-bar-pending{% endif %} 
-                                                {% if g.check_in_date == day %}bar-start{% endif %}">
+                                                {% if g.check_in_date == day %}bar-start{% endif %}
+                                                {% if g.end_night == day %}bar-end{% endif %}">
                                         {% if g.check_in_date == day %}
-                                            <span class="guest-name-label" style="{% if g.status == 'PENDING' %}color: #000;{% else %}color: #fff;{% endif %}">{{ g.last_name }}</span>
+                                            <span class="guest-name-label">{{ g.last_name|slice:":10" }}{% if g.last_name|length > 10 %}...{% endif %}</span>
                                         {% endif %}
                                     </div>
                                 {% endif %}
@@ -173,7 +235,7 @@
     </table>
 
     <div class="footer">
-        Property of Kegama Residences &bull; Internal Performance Data
+        Kegama Residences Internal Report &bull; Do Not Distribute
     </div>
 </body>
 </html>

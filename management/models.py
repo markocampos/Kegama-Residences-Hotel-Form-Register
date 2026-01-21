@@ -135,7 +135,7 @@ class Room(models.Model):
     price_6hr = models.DecimalField(max_digits=10, decimal_places=0, default=0)
     price_10hr = models.DecimalField(max_digits=10, decimal_places=0, default=0)
     capacity = models.IntegerField(default=2, help_text="Max Pax")
-    status = models.CharField(max_length=20, default='AVAILABLE', choices=[('AVAILABLE', 'Available'), ('OCCUPIED', 'Occupied'), ('MAINTENANCE', 'Maintenance')])
+    status = models.CharField(max_length=20, default='AVAILABLE', choices=[('AVAILABLE', 'Available'), ('OCCUPIED', 'Occupied'), ('DIRTY', 'Dirty/Cleaning'), ('MAINTENANCE', 'Maintenance')])
     
     amenities = models.ManyToManyField(Amenity, blank=True, related_name='rooms')
 

@@ -3,9 +3,7 @@
 
 {% block title %}Admin Dashboard | Kegama Residences{% endblock %}
 
-{% block content %}
-<div class="min-h-screen bg-gray-50 pb-20">
-    
+{% block header %}
     <!-- Navbar -->
     <nav class="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-20 flex justify-between items-center backdrop-blur-md bg-white/90">
         <div class="flex items-center gap-4">
@@ -40,7 +38,10 @@
             </button>
         </div>
     </nav>
+{% endblock %}
 
+{% block content %}
+<div class="min-h-screen bg-gray-50 pb-20">
     <div class="p-6 md:p-8 lg:p-12 max-w-6xl mx-auto space-y-10">
         
         <!-- Summary Cards -->
