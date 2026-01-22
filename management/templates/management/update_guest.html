@@ -28,8 +28,12 @@
         alertModal: false, 
         alertMessage: '', 
         modalAction: 'save', 
-        conflictText: '' 
+        conflictText: '',
+        source: '{{ guest.source }}',
+        bookingId: '{{ guest.booking_id }}',
+        originalBookingId: '{{ guest.booking_id }}'
      }"
+     x-init="$watch('source', value => { if(value === 'WALKIN') bookingId = originalBookingId; })"
      @show-alert.window="alertMessage = $event.detail; alertModal = true">
     
     <!-- Delete Confirmation Modal -->
@@ -173,6 +177,10 @@
                         <span class="text-sm font-medium text-gray-900" id="summary-source">--</span>
                     </div>
                     <div class="flex justify-between border-b border-gray-200 pb-2">
+                        <span class="text-xs font-bold text-gray-400 uppercase tracking-wide">Booking ID</span>
+                        <span class="text-sm font-medium text-gray-900" id="summary-id">--</span>
+                    </div>
+                    <div class="flex justify-between border-b border-gray-200 pb-2">
                         <span class="text-xs font-bold text-gray-400 uppercase tracking-wide">Room</span>
                         <span class="text-sm font-medium text-gray-900" id="summary-room">--</span>
                     </div>
@@ -272,7 +280,7 @@
         
         <div class="flex items-center justify-between mb-6">
             <h2 class="text-2xl font-bold text-gray-800">Guest Details</h2>
-            <span class="bg-gray-200 text-gray-700 text-xs font-mono px-2 py-1 rounded">ID: {{ guest.booking_id }}</span>
+            <span class="bg-gray-200 text-gray-700 text-xs font-mono px-2 py-1 rounded" x-text="'ID: ' + bookingId">ID: {{ guest.booking_id }}</span>
         </div>
         
         <!-- Tab Navigation -->
@@ -339,27 +347,36 @@
                         <!-- Source -->
                         <div>
                             <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Booking Source</label>
-                            <select name="source" id="sourceSelect" class="w-full border-gray-200 rounded-lg text-sm font-medium text-gray-900 focus:ring-orange-500 p-2.5">
-                                <option value="WALKIN" {% if guest.source == 'WALKIN' %}selected{% endif %}>Walk-in</option>
-                                <option value="OYO" {% if guest.source == 'OYO' %}selected{% endif %}>OYO</option>
-                                <option value="AIRBNB" {% if guest.source == 'AIRBNB' %}selected{% endif %}>Airbnb</option>
-                            </select>
+                            <div class="grid grid-cols-2 gap-4">
+                                <select name="source" id="sourceSelect" x-model="source" class="w-full border-gray-200 rounded-lg text-sm font-medium text-gray-900 focus:ring-orange-500 p-2.5">
+                                    <option value="WALKIN" {% if guest.source == 'WALKIN' %}selected{% endif %}>Walk-in</option>
+                                    <option value="OYO" {% if guest.source == 'OYO' %}selected{% endif %}>OYO</option>
+                                    <option value="AIRBNB" {% if guest.source == 'AIRBNB' %}selected{% endif %}>Airbnb</option>
+                                </select>
+                                <div class="relative">
+                                    <label class="absolute -top-2 left-2 bg-white px-1 text-[10px] font-bold text-gray-400 uppercase">Booking ID</label>
+                                    <input type="text" name="booking_id" x-model="bookingId" 
+                                           :readonly="source === 'WALKIN'"
+                                           :class="source === 'WALKIN' ? 'bg-gray-50 text-gray-400' : 'bg-white text-gray-900 focus:ring-orange-500'"
+                                           class="w-full border-gray-200 rounded-lg text-sm font-bold p-2.5 transition-colors">
+                                </div>
+                            </div>
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">First Name</label>
-                                <input type="text" name="first_name" id="firstNameInput" value="{{ guest.first_name }}" class="w-full border-gray-200 rounded-lg text-sm font-medium text-gray-900 focus:ring-orange-500">
+                                <input type="text" name="first_name" id="firstNameInput" value="{{ guest.first_name }}" class="w-full border-gray-200 rounded-lg text-sm font-medium text-gray-900 focus:ring-orange-500 uppercase">
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Last Name</label>
-                                <input type="text" name="last_name" id="lastNameInput" value="{{ guest.last_name }}" class="w-full border-gray-200 rounded-lg text-sm font-medium text-gray-900 focus:ring-orange-500">
+                                <input type="text" name="last_name" id="lastNameInput" value="{{ guest.last_name }}" class="w-full border-gray-200 rounded-lg text-sm font-medium text-gray-900 focus:ring-orange-500 uppercase">
                             </div>
                         </div>
 
                         <div>
                             <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Address</label>
-                            <input type="text" name="address" value="{{ guest.address }}" class="w-full border-gray-200 rounded-lg text-sm font-medium text-gray-900 focus:ring-orange-500">
+                            <input type="text" name="address" value="{{ guest.address }}" class="w-full border-gray-200 rounded-lg text-sm font-medium text-gray-900 focus:ring-orange-500 uppercase">
                         </div>
 
                         <div class="grid grid-cols-2 gap-4">
@@ -377,7 +394,7 @@
                                 <label class="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Birth Date</label>
                                 <input type="hidden" name="birth_date" :value="date">
                                 <div class="grid grid-cols-3 gap-1">
-                                    <select x-model="month" class="w-full border-gray-200 rounded-lg text-xs font-medium focus:ring-orange-500 p-2">
+                                    <select x-model="month" @change="$refs.dayInput.focus()" class="w-full border-gray-200 rounded-lg text-xs font-medium focus:ring-orange-500 p-2">
                                         <option value="" disabled>MM</option>
                                         <option value="01">Jan</option>
                                         <option value="02">Feb</option>
@@ -392,8 +409,10 @@
                                         <option value="11">Nov</option>
                                         <option value="12">Dec</option>
                                     </select>
-                                    <input type="tel" x-model="day" maxlength="2" placeholder="DD" class="w-full border-gray-200 rounded-lg text-xs font-medium focus:ring-orange-500 text-center p-2">
-                                    <input type="tel" x-model="year" maxlength="4" placeholder="YYYY" class="w-full border-gray-200 rounded-lg text-xs font-medium focus:ring-orange-500 text-center p-2">
+                                    <input type="tel" x-ref="dayInput" x-model="day" maxlength="2" placeholder="DD" 
+                                           @input="if(day.length === 2) $refs.yearInput.focus()"
+                                           class="w-full border-gray-200 rounded-lg text-xs font-medium focus:ring-orange-500 text-center p-2">
+                                    <input type="tel" x-ref="yearInput" x-model="year" maxlength="4" placeholder="YYYY" class="w-full border-gray-200 rounded-lg text-xs font-medium focus:ring-orange-500 text-center p-2">
                                 </div>
                             </div>
                             <div>
@@ -543,6 +562,7 @@
                                 <option value="GCASH" {% if guest.mode_of_payment == 'GCASH' %}selected{% endif %}>GCash</option>
                                 <option value="MAYA" {% if guest.mode_of_payment == 'MAYA' %}selected{% endif %}>Maya</option>
                                 <option value="BANK_TRANSFER" {% if guest.mode_of_payment == 'BANK_TRANSFER' %}selected{% endif %}>Bank Transfer</option>
+                                <option value="PAID_ONLINE" {% if guest.mode_of_payment == 'PAID_ONLINE' %}selected{% endif %}>Paid Online</option>
                             </select>
                         </div>
 
@@ -820,6 +840,8 @@
         const sourceSelect = document.getElementById('sourceSelect');
         const source = sourceSelect ? sourceSelect.options[sourceSelect.selectedIndex].text : '--';
 
+        const bookingId = document.querySelector('input[name="booking_id"]')?.value || '--';
+
         // MOP
         const mopSelect = document.getElementById('mopSelect');
         const mop = mopSelect ? mopSelect.options[mopSelect.selectedIndex].text : '--';
@@ -856,6 +878,9 @@
         
         const elSource = document.getElementById('summary-source');
         if(elSource) elSource.textContent = source;
+
+        const elId = document.getElementById('summary-id');
+        if(elId) elId.textContent = bookingId;
         
         const elRoom = document.getElementById('summary-room');
         if(elRoom) elRoom.textContent = room;

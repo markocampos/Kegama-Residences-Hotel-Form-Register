@@ -65,6 +65,7 @@ class GuestRegistration(models.Model):
         ('GCASH', 'GCash'),
         ('MAYA', 'Maya'),
         ('BANK_TRANSFER', 'Bank Transfer'),
+        ('PAID_ONLINE', 'Paid Online'),
     ]
     mode_of_payment = models.CharField(max_length=20, choices=PAYMENT_MODE_CHOICES, default='CASH')
     

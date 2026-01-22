@@ -173,7 +173,8 @@
                 <span class="checkbox-square {% if guest.source == 'WALKIN' %}checked{% endif %}"></span> PAGE/WALK-IN
             </td>
             <td class="text-right">
-                <b>SECURITY DEPOSIT:</b> P <u style="font-family: 'Courier New'; font-size: 12px;">{{ guest.security_deposit|intcomma|default:"Error" }}</u>
+                <b>SECURITY DEPOSIT:</b> P <u style="font-family: 'Courier New'; font-size: 12px;">{{ guest.security_deposit|intcomma|default:"Error" }}</u><br>
+                <div style="margin-top: 10px;"><b>M.O.P:</b> <span style="display: inline-block; width: 60px; border-bottom: 1px solid #000;">&nbsp;</span></div>
             </td>
         </tr>
     </table>
@@ -192,7 +193,7 @@
                 <b>Date: Today:</b> <span style="font-family: 'Courier New'; text-decoration: underline;">{% now "M d, Y" %}</span>
             </td>
             <td class="text-right">
-                <b>BOOKING ID #</b> <span style="border-bottom: 1px solid #000; padding: 0 5px; font-family: 'Courier New';">{{ guest.booking_id }}</span>
+                <b>{% if guest.source == 'WALKIN' %}BOOKING ID #{% else %}{{ guest.source }} ID #{% endif %}</b> <span style="border-bottom: 1px solid #000; padding: 0 5px; font-family: 'Courier New';">{{ guest.booking_id }}</span>
             </td>
         </tr>
     </table>

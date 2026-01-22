@@ -204,6 +204,7 @@ def update_guest(request, guest_id):
 
     if request.method == 'POST':
         guest.source = request.POST.get('source', 'WALKIN')
+        guest.booking_id = request.POST.get('booking_id', guest.booking_id)
         guest.first_name = request.POST.get('first_name', '').upper()
         guest.last_name = request.POST.get('last_name', '').upper()
         guest.address = request.POST.get('address', '').upper()
