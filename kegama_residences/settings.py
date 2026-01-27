@@ -19,6 +19,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.humanize',
     'management',
+    'payslip',
 ]
 
 MIDDLEWARE = [
@@ -100,7 +101,7 @@ CACHES = {
     }
 }
 
-SESSION_COOKIE_AGE = 60 * 60 * 24 * 90  # 3 months
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 365  # 3 months
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False
 SESSION_SAVE_EVERY_REQUEST = True
 

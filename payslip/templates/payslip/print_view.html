@@ -1,0 +1,220 @@
+{% extends "management/base.html" %}
+{% load humanize %}
+
+{% block title %}Print Payslip{% endblock %}
+
+{% block content %}
+<style>
+    .print-preview-wrapper {
+        background-color: #f1f5f9;
+        min-height: 100vh;
+        padding: 40px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .controls {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 32px;
+        width: 100%;
+        max-width: 500px;
+    }
+    
+    .btn {
+        padding: 12px 24px;
+        border-radius: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        text-decoration: none;
+        flex: 1;
+        text-align: center;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .btn-print { 
+        background: #111827; color: #fff; border: none; 
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    }
+    .btn-print:hover { background: #000; transform: translateY(-1px); }
+    
+    .btn-back { 
+        background: white; color: #4b5563; border: 1px solid #e5e7eb;
+        box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05);
+    }
+    .btn-back:hover { background: #f9fafb; color: #111827; }
+
+    .paper-sheet {
+        background: white;
+        width: 100%;
+        max-width: 500px;
+        padding: 0;
+        box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+        margin-bottom: 20px;
+        border-radius: 12px; /* Visual rounding for preview */
+        overflow: hidden;
+    }
+
+    .mini-slip {
+        background: white;
+        border: 1px solid #e5e7eb; 
+        padding: 24px;
+        color: #000;
+        display: flex;
+        flex-direction: column;
+        height: auto;
+        min-height: 450px;
+        box-sizing: border-box;
+        position: relative;
+    }
+
+    /* Typography */
+    .header { text-align: center; margin-bottom: 16px; border-bottom: 2px solid #000; padding-bottom: 8px; }
+    .co-name { font-weight: 900; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; }
+    .doc-type { font-size: 0.7rem; font-weight: 700; color: #4b5563; text-transform: uppercase; margin-top: 2px; }
+    
+    .slip-id {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        font-size: 0.7rem;
+        font-weight: 800;
+        color: #9ca3af;
+    }
+
+    .info-section { 
+        display: grid; 
+        grid-template-columns: auto 1fr auto 1fr;
+        gap: 8px 16px; 
+        font-size: 0.75rem; 
+        margin-bottom: 16px;
+        padding-bottom: 16px;
+        border-bottom: 1px solid #000;
+    }
+    .label { font-weight: 800; font-size: 0.6rem; text-transform: uppercase; color: #6b7280; }
+    .val { font-weight: 600; }
+
+    .body-grid { 
+        display: grid; 
+        grid-template-columns: 1fr 1fr; 
+        gap: 24px;
+        flex-grow: 1; 
+    }
+    
+    .sec-title { 
+        font-weight: 800; font-size: 0.65rem; text-transform: uppercase;
+        border-bottom: 1.5px solid #000; margin-bottom: 8px; display: block;
+        padding-bottom: 4px;
+    }
+
+    .line { 
+        display: flex; 
+        justify-content: space-between; 
+        font-size: 0.7rem; 
+        margin-bottom: 6px;
+    }
+    .line span:last-child { font-family: 'Courier New', monospace; font-weight: 700; }
+
+    .total-row { 
+        border-top: 1.5px solid #000; margin-top: 12px; padding-top: 6px;
+        font-weight: 900; display: flex; justify-content: space-between; font-size: 0.75rem;
+    }
+
+    .footer { margin-top: 20px; }
+    .net-box { 
+        border: 2px solid #000; padding: 12px; margin-bottom: 20px;
+        display: flex; justify-content: space-between; align-items: center;
+        background: #f9fafb;
+    }
+    .net-label { font-weight: 900; font-size: 0.8rem; text-transform: uppercase; }
+    .net-amount { font-size: 1.1rem; font-weight: 900; }
+    
+    .sig-area { 
+        display: grid; 
+        grid-template-columns: 1fr 1fr; 
+        gap: 32px; 
+    }
+    .sig-line { 
+        border-top: 1px solid #000; margin-top: 20px; text-align: center; 
+        font-size: 0.55rem; font-weight: 700; text-transform: uppercase; padding-top: 4px; color: #4b5563;
+    }
+
+    @media print {
+        @page { margin: 0; }
+        body { margin: 0.5cm; background: white; }
+        .print-preview-wrapper { background: white; padding: 0; display: block; }
+        .controls { display: none; }
+        .paper-sheet { box-shadow: none; max-width: 100%; margin: 0; padding: 0; border-radius: 0; }
+        .mini-slip { border: 1px solid #000; padding: 15px; }
+        .net-box { background: transparent !important; }
+    }
+</style>
+
+<div class="print-preview-wrapper">
+    <div class="controls no-print">
+        <button onclick="window.close()" class="btn btn-back">Close Preview</button>
+        <button onclick="window.print()" class="btn btn-print">Print / Save PDF</button>
+    </div>
+
+    <div class="paper-sheet">
+        <div class="mini-slip">
+            <div class="slip-id">#{{ employee_id|slice:":8" }}</div>
+            <div class="header">
+                <div class="co-name">KEGAMA RESIDENCES INC.</div>
+                <div class="doc-type">Payslip</div>
+            </div>
+
+            <div class="info-section">
+                <span class="label">Employee:</span>
+                <span class="val">{{ employee_name|upper }}</span>
+                <span class="label">Position:</span>
+                <span class="val">{{ position|default:"-"|upper }}</span>
+                <span class="label">Date:</span>
+                <span class="val">{{ date }}</span>
+                <span class="label">Period:</span>
+                <span class="val">{{ period }}</span>
+            </div>
+
+            <div class="body-grid">
+                <div class="col">
+                    <span class="sec-title">Earnings</span>
+                    {% for label, amount in earnings.items %}
+                    <div class="line">
+                        <span>{{ label }}</span>
+                        <span>{{ amount|floatformat:2|intcomma }}</span>
+                    </div>
+                    {% endfor %}
+                    <div class="total-row"><span>GROSS PAY</span><span>{{ total_earnings|floatformat:2|intcomma }}</span></div>
+                </div>
+
+                <div class="col">
+                    <span class="sec-title">Deductions</span>
+                    {% for label, amount in deductions.items %}
+                    <div class="line">
+                        <span>{{ label }}</span>
+                        <span>{{ amount|floatformat:2|intcomma }}</span>
+                    </div>
+                    {% endfor %}
+                    <div class="total-row"><span>TOTAL DED.</span><span>{{ total_deductions|floatformat:2|intcomma }}</span></div>
+                </div>
+            </div>
+
+            <div class="footer">
+                <div class="net-box">
+                    <span class="net-label">NET PAY:</span>
+                    <span class="net-amount">&#8369; {{ net_pay|floatformat:2|intcomma }}</span>
+                </div>
+                <div class="sig-area">
+                    <div class="sig-line">Authorized By</div>
+                    <div class="sig-line">Employee Signature</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

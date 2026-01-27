@@ -12,6 +12,7 @@ urlpatterns = [
     
     # Management Routes
     path(f'{MGMT_PREFIX}login/', views.admin_login, name='admin_login'),
+    path(f'{MGMT_PREFIX}logout/', views.logout_view, name='logout'),
     path(f'{MGMT_PREFIX}dashboard/', views.dashboard, name='dashboard'),
     path(f'{MGMT_PREFIX}rooms/', views.room_rack, name='room_rack'),
     path(f'{MGMT_PREFIX}rooms/clean/', views.mark_room_clean, name='mark_room_clean'),

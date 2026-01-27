@@ -1,0 +1,231 @@
+{% extends "management/base.html" %}
+{% load static %}
+
+{% block title %}Payroll System | Kegama{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 font-sans">
+    
+    <!-- BRANDED HEADER -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-10 gap-6">
+        <div class="flex items-center gap-5">
+            <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100">
+                <img src="{% static 'images/logo.png' %}" alt="Kegama Logo" class="h-12 w-auto object-contain">
+            </div>
+            <div>
+                <h1 class="text-2xl font-black text-gray-900 uppercase tracking-tight">Payroll <span class="text-orange-600">System</span></h1>
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">
+                    Employee Management & Payslip Generation
+                </p>
+            </div>
+        </div>
+        
+        <div class="flex gap-3">
+            <a href="{% url 'logout' %}" class="flex items-center justify-center p-3 bg-white border border-gray-200 rounded-xl shadow-sm text-gray-400 hover:text-red-600 hover:border-red-200 transition-all group" title="Logout">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                </svg>
+            </a>
+            <a href="{% url 'payslip:print_all' %}" class="flex items-center justify-center px-5 py-3 bg-white border border-gray-200 rounded-xl shadow-sm text-xs font-black uppercase tracking-wider text-gray-600 hover:text-orange-600 hover:border-orange-200 transition-all group">
+                <svg class="mr-2 h-5 w-5 text-gray-400 group-hover:text-orange-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                Print Master Sheet
+            </a>
+            <button onclick="toggleModal('add-employee-modal', true)" class="flex items-center justify-center px-5 py-3 bg-gray-900 rounded-xl shadow-lg text-xs font-black uppercase tracking-wider text-white hover:bg-black transition-all transform hover:-translate-y-0.5">
+                <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                New Employee
+            </button>
+        </div>
+    </div>
+
+    <!-- MAIN CARD -->
+    <div class="bg-white shadow-xl shadow-gray-200/40 rounded-3xl border border-gray-100 overflow-hidden">
+        <!-- Toolbar -->
+        <div class="px-8 py-6 border-b border-gray-50 flex justify-between items-center bg-gray-50/30">
+            <div class="text-xs font-bold text-gray-400 uppercase tracking-widest">
+                Active Staff ({{ employees|length }})
+            </div>
+            <!-- Future Search Bar Placeholder -->
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-100">
+                <tbody class="divide-y divide-gray-50">
+                    {% for employee in employees %}
+                    <tr onclick="window.location='{% url 'payslip:generate' employee.id %}'" class="group cursor-pointer hover:bg-orange-50/30 transition-all duration-200">
+                        <td class="px-8 py-5 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="h-12 w-12 flex-shrink-0 relative">
+                                    <div class="h-12 w-12 rounded-2xl bg-gradient-to-br from-gray-100 to-gray-50 flex items-center justify-center text-gray-500 font-black text-lg border border-gray-100 group-hover:border-orange-200 group-hover:text-orange-600 transition-colors">
+                                        {{ employee.first_name|slice:":1" }}{{ employee.last_name|slice:":1" }}
+                                    </div>
+                                    <div class="absolute -bottom-1 -right-1 w-4 h-4 bg-green-400 border-2 border-white rounded-full"></div>
+                                </div>
+                                <div class="ml-5">
+                                    <div class="text-sm font-bold text-gray-900 group-hover:text-orange-700 transition-colors">{{ employee.first_name }} {{ employee.last_name }}</div>
+                                    <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mt-0.5">
+                                        {{ employee.position|default:"Staff" }}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        
+                        <!-- Desktop Only Info -->
+                        <td class="hidden md:table-cell px-6 py-5 whitespace-nowrap">
+                            <div class="text-xs font-medium text-gray-500">
+                                <span class="block text-[10px] font-bold text-gray-300 uppercase tracking-wider mb-1">Joined</span>
+                                {{ employee.created_at|date:"M d, Y" }}
+                            </div>
+                        </td>
+
+                        <td class="px-8 py-5 whitespace-nowrap text-right">
+                            <div class="flex items-center justify-end gap-4">
+                                <span class="hidden sm:inline-flex items-center px-3 py-1 rounded-lg text-[10px] font-bold bg-gray-50 text-gray-400 uppercase tracking-wider group-hover:bg-orange-100 group-hover:text-orange-700 transition-colors">
+                                    Manage Payroll &rarr;
+                                </span>
+                                
+                                <button onclick="confirmDelete('{% url 'payslip:remove_employee' employee.id %}'); event.stopPropagation();" class="p-2 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 transition-all">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="px-6 py-32 text-center">
+                            <div class="flex flex-col items-center justify-center opacity-50">
+                                <img src="{% static 'images/logo.png' %}" class="h-16 w-auto grayscale mb-4">
+                                <h3 class="text-lg font-bold text-gray-900">No employees yet</h3>
+                                <p class="text-sm text-gray-500 mt-1">Add your first team member to start.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div id="add-employee-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-md hidden flex items-center justify-center z-50 p-4 transition-all duration-300 opacity-0">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform scale-95 transition-all duration-300" id="modal-content">
+        <div class="px-8 py-6 border-b border-gray-100 flex justify-between items-center bg-white">
+            <div>
+                <h3 class="text-xl font-black text-gray-900 tracking-tight">New Employee</h3>
+                <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Add to Payroll System</p>
+            </div>
+            <button onclick="toggleModal('add-employee-modal', false)" class="text-gray-300 hover:text-gray-600 transition-colors">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
+        </div>
+        <form action="{% url 'payslip:add_employee' %}" method="POST" class="p-8 space-y-6">
+            {% csrf_token %}
+            <div class="space-y-5">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">First Name</label>
+                        <input type="text" name="first_name" required class="w-full rounded-xl border-gray-200 focus:border-orange-500 focus:ring-orange-500 py-3 px-4 text-sm font-bold bg-gray-50 focus:bg-white transition-all">
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Last Name</label>
+                        <input type="text" name="last_name" required class="w-full rounded-xl border-gray-200 focus:border-orange-500 focus:ring-orange-500 py-3 px-4 text-sm font-bold bg-gray-50 focus:bg-white transition-all">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Job Position</label>
+                    <input type="text" name="position" placeholder="e.g. Property Manager" class="w-full rounded-xl border-gray-200 focus:border-orange-500 focus:ring-orange-500 py-3 px-4 text-sm font-bold bg-gray-50 focus:bg-white transition-all">
+                </div>
+            </div>
+            <button type="submit" class="w-full bg-black hover:bg-gray-900 text-white font-bold py-4 rounded-xl shadow-lg transition-all duration-200 mt-4 text-sm uppercase tracking-widest">
+                Create Employee
+            </button>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="delete-modal" class="fixed inset-0 bg-gray-900/60 backdrop-blur-md hidden flex items-center justify-center z-50 p-4 transition-all duration-300 opacity-0">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform scale-95 transition-all duration-300" id="delete-modal-content">
+        <div class="p-8 text-center">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4 text-red-500">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </div>
+            <h3 class="text-xl font-black text-gray-900 mb-2">Are you sure?</h3>
+            <p class="text-sm text-gray-500 mb-6">Do you really want to delete this employee? This action cannot be undone.</p>
+            
+            <div class="flex gap-3">
+                <button onclick="toggleDeleteModal(false)" class="flex-1 px-5 py-3 bg-white border border-gray-200 text-gray-700 font-bold rounded-xl hover:bg-gray-50 transition-colors uppercase text-xs tracking-wider">
+                    Cancel
+                </button>
+                <button onclick="performDelete()" class="flex-1 px-5 py-3 bg-red-500 text-white font-bold rounded-xl hover:bg-red-600 transition-colors shadow-lg shadow-red-200 uppercase text-xs tracking-wider">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<form id="delete-form" method="POST" action="" class="hidden">{% csrf_token %}</form>
+
+<script>
+    let deleteUrl = null;
+
+    function toggleModal(id, show) {
+        const modal = document.getElementById(id);
+        const content = document.getElementById('modal-content');
+        if (show) {
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }, 10);
+            modal.classList.add('flex');
+        } else {
+            modal.classList.add('opacity-0');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300);
+        }
+    }
+
+    function toggleDeleteModal(show) {
+        const modal = document.getElementById('delete-modal');
+        const content = document.getElementById('delete-modal-content');
+        if (show) {
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                content.classList.remove('scale-95');
+                content.classList.add('scale-100');
+            }, 10);
+            modal.classList.add('flex');
+        } else {
+            modal.classList.add('opacity-0');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }, 300);
+            if (!show) deleteUrl = null;
+        }
+    }
+
+    function confirmDelete(url) {
+        deleteUrl = url;
+        toggleDeleteModal(true);
+    }
+
+    function performDelete() {
+        if (deleteUrl) {
+            const form = document.getElementById('delete-form');
+            form.action = deleteUrl;
+            form.submit();
+        }
+    }
+</script>
+{% endblock %}

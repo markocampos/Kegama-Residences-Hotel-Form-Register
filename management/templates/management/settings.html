@@ -102,6 +102,29 @@
                 </div>
             </section>
 
+            <!-- SESSION SECTION -->
+            <section class="space-y-6">
+                <h3 class="text-[10px] font-black text-gray-400 uppercase tracking-[0.3em] pl-2 flex items-center gap-2">
+                    <span class="w-2 h-2 bg-gray-400 rounded-full"></span>
+                    Account Session
+                </h3>
+                
+                <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="p-8 lg:p-10 flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div>
+                            <h4 class="text-sm font-black text-gray-900 uppercase tracking-tight">Sign Out</h4>
+                            <p class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">End your current administrative session</p>
+                        </div>
+                        <a href="{% url 'logout' %}" class="w-full md:w-auto bg-gray-100 text-red-600 text-[10px] font-black uppercase tracking-[0.2em] px-10 py-4 rounded-2xl hover:bg-red-50 transition-all transform active:scale-95 border border-red-100 flex items-center justify-center gap-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                            </svg>
+                            Logout System
+                        </a>
+                    </div>
+                </div>
+            </section>
+
         </div>
     </div>
 </div>

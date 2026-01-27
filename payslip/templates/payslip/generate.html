@@ -1,0 +1,259 @@
+{% extends "management/base.html" %}
+{% load static %}
+
+{% block title %}Payslip: {{ employee.first_name }} {{ employee.last_name }}{% endblock %}
+
+{% block content %}
+<style>
+    /* UI Overhaul */
+    .app-bg { background-color: #f9fafb; min-height: calc(100vh - 64px); font-family: 'Inter', sans-serif; padding-bottom: 40px; }
+    
+    .card { 
+        background: white; 
+        border-radius: 16px; 
+        border: 1px solid #f3f4f6; 
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02), 0 2px 4px -1px rgba(0,0,0,0.02);
+    }
+
+    .form-input {
+        background: #fcfcfc;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 10px 12px;
+        width: 100%;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+        font-weight: 500;
+        color: #111827;
+    }
+    
+    .form-input:focus { 
+        border-color: #f97316; 
+        background: white; 
+        outline: none; 
+        box-shadow: 0 0 0 3px rgba(249,115,22,0.1); 
+    }
+    
+    .form-input[readonly] { background: transparent; border-color: transparent; padding-left: 0; font-weight: 700; color: #111827; }
+
+    .section-label { 
+        font-size: 0.7rem; 
+        text-transform: uppercase; 
+        letter-spacing: 0.05em; 
+        color: #9ca3af; 
+        font-weight: 700; 
+        margin-bottom: 4px; 
+        display: block; 
+    }
+
+    /* Grid Layouts */
+    .split-layout { display: grid; grid-template-columns: 1fr; gap: 24px; max-width: 1000px; margin: 0 auto; padding: 24px 16px; }
+    @media(min-width: 1024px) { 
+        .split-layout { grid-template-columns: 350px 1fr; align-items: start; } 
+    }
+
+    .stat-card { background: #fff7ed; border: 1px solid #ffedd5; border-radius: 12px; padding: 16px; text-align: center; }
+    .stat-val { font-size: 1.5rem; font-weight: 800; color: #c2410c; letter-spacing: -0.02em; }
+    .stat-lbl { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; color: #9a3412; }
+
+    .calc-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .calc-label { font-size: 0.85rem; font-weight: 500; color: #4b5563; }
+    .calc-input { width: 120px; text-align: right; font-family: monospace; font-size: 0.95rem; }
+
+    .btn-primary {
+        background: #ea580c; color: white; width: 100%; padding: 14px; border-radius: 12px;
+        font-weight: 700; font-size: 0.95rem; border: none; cursor: pointer;
+        transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(234,88,12,0.2);
+    }
+    .btn-primary:hover { background: #c2410c; transform: translateY(-1px); }
+    .btn-secondary {
+        background: white; color: #4b5563; border: 1px solid #e5e7eb; margin-top: 12px;
+        box-shadow: none;
+    }
+    .btn-secondary:hover { background: #f9fafb; color: #111827; border-color: #d1d5db; }
+</style>
+
+<div class="app-bg">
+    <div class="max-w-[1000px] mx-auto px-4 pt-6">
+        <a href="{% url 'payslip:index' %}" class="inline-flex items-center text-sm font-bold text-gray-400 hover:text-gray-900 transition-colors">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+            Back to Directory
+        </a>
+    </div>
+
+    <form id="payslip-form" action="{% url 'payslip:save' %}" method="POST" class="split-layout">
+        {% csrf_token %}
+        <input type="hidden" name="employee_id" value="{{ employee.id }}">
+
+        <!-- Left Sidebar: Info -->
+        <div class="flex flex-col gap-6">
+            <div class="card p-6">
+                <div class="flex items-center gap-4 mb-6">
+                    <div class="h-12 w-12 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-lg">
+                        {{ employee.first_name|slice:":1" }}{{ employee.last_name|slice:":1" }}
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-gray-900 leading-tight">{{ employee.first_name }} {{ employee.last_name }}</h2>
+                        <p class="text-xs font-medium text-gray-400">#{{ employee.id|stringformat:"s"|slice:":8" }}</p>
+                    </div>
+                </div>
+                
+                <div class="space-y-4">
+                    <div>
+                        <label class="section-label">Position</label>
+                        <div class="font-bold text-gray-700">{{ employee.position|default:'-' }}</div>
+                    </div>
+                    <div>
+                        <label class="section-label">Status</label>
+                        <div class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-green-100 text-green-800">
+                            {{ employee.get_status_display }}
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="section-label">Joined</label>
+                            <div class="text-sm font-medium text-gray-600">{{ employee.created_at|date:'M d, Y' }}</div>
+                        </div>
+                        <div>
+                            <label class="section-label">Date</label>
+                            <input type="date" name="pay_date" value="{{ payslip.pay_date|date:'Y-m-d'|default:'' }}" class="form-input py-1 px-2 text-sm border-gray-200">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="section-label">Pay Period</label>
+                        <input type="text" name="pay_period" value="{{ payslip.pay_period|default:'' }}" placeholder="e.g. Jan 1-15, 2026" class="form-input">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Net Pay Card (Sticky on desktop could be nice, but simple flow here) -->
+            <div class="stat-card">
+                <div class="stat-lbl">Estimated Net Pay</div>
+                <div class="stat-val" id="net-pay">0.00</div>
+            </div>
+
+            <div>
+                <button type="submit" class="btn-primary">Save Changes</button>
+                <button type="button" onclick="saveAndPreview()" class="btn-primary btn-secondary">Save & Preview PDF</button>
+            </div>
+        </div>
+
+        <!-- Right Content: Calculator -->
+        <div class="card p-6 sm:p-8">
+            <h3 class="text-lg font-bold text-gray-900 mb-6 flex items-center">
+                <span class="w-1 h-6 bg-orange-500 rounded-full mr-3"></span>
+                Payroll Details
+            </h3>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-12 gap-y-8">
+                <!-- Earnings -->
+                <div>
+                    <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-2">
+                        <span class="text-sm font-bold text-green-600 uppercase tracking-wide">Earnings</span>
+                        <span class="text-xs font-bold bg-green-50 text-green-600 px-2 py-1 rounded-md">+</span>
+                    </div>
+                    <div class="space-y-1">
+                        {% for field, val in earnings_fields %}
+                        <!-- We'll map these manually to keep the template logic simple without custom filters -->
+                        {% endfor %}
+                        
+                        <div class="calc-row"><span class="calc-label">Regular Pay</span><input type="text" inputmode="decimal" name="earning_regular" class="form-input calc-input calc-earning" value="{{ payslip.earning_regular|floatformat:2|default:'' }}" placeholder="0.00"></div>
+                        <div class="calc-row"><span class="calc-label">Holiday Pay</span><input type="text" inputmode="decimal" name="earning_holiday" class="form-input calc-input calc-earning" value="{{ payslip.earning_holiday|floatformat:2|default:'' }}" placeholder="0.00"></div>
+                        <div class="calc-row"><span class="calc-label">Overtime</span><input type="text" inputmode="decimal" name="earning_overtime" class="form-input calc-input calc-earning" value="{{ payslip.earning_overtime|floatformat:2|default:'' }}" placeholder="0.00"></div>
+                        <div class="calc-row"><span class="calc-label">Allowances</span><input type="text" inputmode="decimal" name="earning_allowances" class="form-input calc-input calc-earning" value="{{ payslip.earning_allowances|floatformat:2|default:'' }}" placeholder="0.00"></div>
+                        <div class="calc-row"><span class="calc-label">13th Month</span><input type="text" inputmode="decimal" name="earning_13th" class="form-input calc-input calc-earning" value="{{ payslip.earning_13th|floatformat:2|default:'' }}" placeholder="0.00"></div>
+                        <div class="calc-row"><span class="calc-label">Other</span><input type="text" inputmode="decimal" name="earning_other" class="form-input calc-input calc-earning" value="{{ payslip.earning_other|floatformat:2|default:'' }}" placeholder="0.00"></div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between font-bold text-gray-900 text-sm">
+                        <span>Total Earnings</span>
+                        <span id="gross-pay">0.00</span>
+                    </div>
+                </div>
+
+                <!-- Deductions -->
+                <div>
+                    <div class="flex items-center justify-between mb-4 border-b border-gray-100 pb-2">
+                        <span class="text-sm font-bold text-red-500 uppercase tracking-wide">Deductions</span>
+                        <span class="text-xs font-bold bg-red-50 text-red-500 px-2 py-1 rounded-md">-</span>
+                    </div>
+                    <div class="space-y-1">
+                        <div class="calc-row"><span class="calc-label">SSS</span><input type="text" inputmode="decimal" name="deduction_sss" class="form-input calc-input calc-deduction" value="{{ payslip.deduction_sss|floatformat:2|default:'' }}" placeholder="0.00"></div>
+                        <div class="calc-row"><span class="calc-label">PhilHealth</span><input type="text" inputmode="decimal" name="deduction_philhealth" class="form-input calc-input calc-deduction" value="{{ payslip.deduction_philhealth|floatformat:2|default:'' }}" placeholder="0.00"></div>
+                        <div class="calc-row"><span class="calc-label">Pag-IBIG</span><input type="text" inputmode="decimal" name="deduction_pagibig" class="form-input calc-input calc-deduction" value="{{ payslip.deduction_pagibig|floatformat:2|default:'' }}" placeholder="0.00"></div>
+                        <div class="calc-row"><span class="calc-label">Tax</span><input type="text" inputmode="decimal" name="deduction_tax" class="form-input calc-input calc-deduction" value="{{ payslip.deduction_tax|floatformat:2|default:'' }}" placeholder="0.00"></div>
+                        <div class="calc-row"><span class="calc-label">Cash Advance</span><input type="text" inputmode="decimal" name="deduction_cashadv" class="form-input calc-input calc-deduction" value="{{ payslip.deduction_cashadv|floatformat:2|default:'' }}" placeholder="0.00"></div>
+                        <div class="calc-row"><span class="calc-label">Other</span><input type="text" inputmode="decimal" name="deduction_other" class="form-input calc-input calc-deduction" value="{{ payslip.deduction_other|floatformat:2|default:'' }}" placeholder="0.00"></div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between font-bold text-gray-900 text-sm">
+                        <span>Total Deductions</span>
+                        <span id="total-deductions">0.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    function saveAndPreview() {
+        const form = document.getElementById('payslip-form');
+        const originalAction = form.action;
+        const originalTarget = form.target;
+        form.action = "{% url 'payslip:preview' %}";
+        form.target = "_blank";
+        form.submit();
+        form.action = originalAction;
+        form.target = originalTarget;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const earnings = document.querySelectorAll('.calc-earning');
+        const deductions = document.querySelectorAll('.calc-deduction');
+        const grossEl = document.getElementById('gross-pay');
+        const dedEl = document.getElementById('total-deductions');
+        const netEl = document.getElementById('net-pay');
+
+        function formatNumber(num) {
+            return num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        function parseValue(val) {
+            return parseFloat(val.replace(/,/g, '')) || 0;
+        }
+
+        function formatInput(input) {
+            let val = input.value.replace(/,/g, '');
+            if (val === '' || isNaN(val)) return;
+            let parts = val.split('.');
+            parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            input.value = parts.join('.');
+        }
+
+        function calc() {
+            let g = 0, d = 0;
+            earnings.forEach(i => g += parseValue(i.value));
+            deductions.forEach(i => d += parseValue(i.value));
+            grossEl.textContent = formatNumber(g);
+            dedEl.textContent = formatNumber(d);
+            netEl.textContent = formatNumber(g - d);
+        }
+
+        const inputs = document.querySelectorAll('.calc-input');
+        inputs.forEach(input => {
+            input.addEventListener('input', (e) => { formatInput(e.target); calc(); });
+            input.addEventListener('blur', (e) => { 
+                let val = parseValue(e.target.value);
+                if (val !== 0 || e.target.value !== '') e.target.value = formatNumber(val);
+                calc(); 
+            });
+            input.addEventListener('focus', function() { this.select(); });
+        });
+        
+        // Initial format
+        inputs.forEach(input => {
+            if(input.value) input.value = formatNumber(parseValue(input.value));
+        });
+        calc();
+    });
+</script>
+{% endblock %}

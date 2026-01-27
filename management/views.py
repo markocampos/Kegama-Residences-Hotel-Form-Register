@@ -34,6 +34,11 @@ def cleanup_expired_registrations():
     GuestRegistration.objects.filter(status='PENDING', created_at__lt=expiration_time).delete()
 
 def intro(request):
+    if request.session.get('is_owner'):
+        return redirect('payslip:index')
+    if request.session.get('is_manager'):
+        return redirect('dashboard')
+
     try:
         guest_id = request.get_signed_cookie('kegama_guest_id')
     except (KeyError, Exception):
@@ -129,7 +134,7 @@ def submit_guest_form(request):
     response.set_signed_cookie('kegama_guest_id', str(guest.id), max_age=60*60*24*90) 
     return response
 
-@ratelimit(key='ip', rate='5/10m', block=False)
+@ratelimit(key='ip', rate='5/10m', method='POST', block=False)
 def admin_login(request):
     was_limited = getattr(request, 'limited', False)
     if was_limited:
@@ -138,18 +143,32 @@ def admin_login(request):
     if request.method == 'POST':
         pin = request.POST.get('pin')
         settings_obj = AdminSettings.load()
-        if pin == settings_obj.pin_code: 
+        
+        if pin == settings_obj.owner_pin:
             request.session['is_manager'] = True
-            log_action(request, 'LOGIN', 'Admin logged in successfully')
+            request.session['is_owner'] = True
+            log_action(request, 'LOGIN', 'Owner logged in successfully')
+            return redirect('payslip:index')
+        elif pin == settings_obj.pin_code: 
+            request.session['is_manager'] = True
+            request.session['is_owner'] = False # Explicitly deny owner access for regular managers
+            log_action(request, 'LOGIN', 'Manager logged in successfully')
             return redirect('dashboard')
         else:
             return render(request, 'management/admin_login.html', {'error': 'Invalid PIN'})
             
     return render(request, 'management/admin_login.html')
 
+def logout_view(request):
+    request.session.flush()
+    return redirect('admin_login')
+
 def dashboard(request):
     if not request.session.get('is_manager'):
         return redirect('admin_login')
+    
+    if request.session.get('is_owner'):
+        return redirect('payslip:index')
     
     cleanup_expired_registrations()
     

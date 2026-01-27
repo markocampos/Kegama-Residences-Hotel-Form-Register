@@ -90,6 +90,7 @@ class GuestRegistration(models.Model):
 
 class AdminSettings(models.Model):
     pin_code = models.CharField(max_length=10, default='12345', help_text="PIN for Management Access")
+    owner_pin = models.CharField(max_length=10, default='99999', help_text="PIN for Owner/Payroll Access")
     maintenance_mode = models.BooleanField(default=False, help_text="Disable guest form")
     form_access_code = models.CharField(max_length=20, blank=True, help_text="Optional code required to view form")
     policy_text = models.TextField(default="""Check-in Time: 02:00 PM

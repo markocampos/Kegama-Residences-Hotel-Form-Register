@@ -15,8 +15,12 @@ def service_worker(request):
     except FileNotFoundError:
         return HttpResponse("Service Worker not found", status=404)
 
+
+PAYSLIP_URL = os.environ.get('PAYSLIP_URL', 'payslip/').strip('/') + '/'
+
 urlpatterns = [
     path('sw.js', service_worker, name='service_worker'),
     path(ADMIN_URL, admin.site.urls),
+    path(PAYSLIP_URL, include('payslip.urls')),
     path('', include('management.urls')),
 ]
